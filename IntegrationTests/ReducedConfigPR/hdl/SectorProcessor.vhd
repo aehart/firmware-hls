@@ -17,12 +17,12 @@ entity SectorProcessor is
     DL_39_link_AV_dout       : in t_arr_DL_39_DATA;
     DL_39_link_empty_neg     : in t_arr_DL_39_1b;
     DL_39_link_read          : out t_arr_DL_39_1b;
-    BW_46_stream_AV_din     : in t_arr_BW_46_DATA;
-    BW_46_stream_full_neg   : in t_arr_BW_46_1b;
-    BW_46_stream_write      : out t_arr_BW_46_1b;
-    TW_84_stream_AV_din     : in t_arr_TW_84_DATA;
-    TW_84_stream_full_neg   : in t_arr_TW_84_1b;
-    TW_84_stream_write      : out t_arr_TW_84_1b
+    BW_46_stream_AV_din       : in t_arr_BW_46_DATA;
+    BW_46_stream_A_full_neg   : in t_arr_BW_46_1b;
+    BW_46_stream_A_write      : out t_arr_BW_46_1b;
+    TW_84_stream_AV_din       : in t_arr_TW_84_DATA;
+    TW_84_stream_A_full_neg   : in t_arr_TW_84_1b;
+    TW_84_stream_A_write      : out t_arr_TW_84_1b
   );
 end SectorProcessor;
 
@@ -5423,20 +5423,20 @@ begin
       barrelFullMatches_3_dataarray_data_V_address1  => FM_52_mem_AV_readaddr(L1L2_L6PHIB),
       barrelFullMatches_3_dataarray_data_V_q1        => FM_52_mem_AV_dout(L1L2_L6PHIB),
       trackWord_V_din       => TW_84_stream_AV_din(L1L2),
-      trackWord_V_full_n    => TW_84_stream_full_neg(L1L2),
-      trackWord_V_write     => TW_84_stream_write(L1L2),
+      trackWord_V_full_n    => TW_84_stream_A_full_neg(L1L2),
+      trackWord_V_write     => TW_84_stream_A_write(L1L2),
       barrelStubWords_0_V_din       => BW_46_stream_AV_din(L1L2_L3),
-      barrelStubWords_0_V_full_n    => BW_46_stream_full_neg(L1L2_L3),
-      barrelStubWords_0_V_write     => BW_46_stream_write(L1L2_L3),
+      barrelStubWords_0_V_full_n    => BW_46_stream_A_full_neg(L1L2_L3),
+      barrelStubWords_0_V_write     => BW_46_stream_A_write(L1L2_L3),
       barrelStubWords_1_V_din       => BW_46_stream_AV_din(L1L2_L4),
-      barrelStubWords_1_V_full_n    => BW_46_stream_full_neg(L1L2_L4),
-      barrelStubWords_1_V_write     => BW_46_stream_write(L1L2_L4),
+      barrelStubWords_1_V_full_n    => BW_46_stream_A_full_neg(L1L2_L4),
+      barrelStubWords_1_V_write     => BW_46_stream_A_write(L1L2_L4),
       barrelStubWords_2_V_din       => BW_46_stream_AV_din(L1L2_L5),
-      barrelStubWords_2_V_full_n    => BW_46_stream_full_neg(L1L2_L5),
-      barrelStubWords_2_V_write     => BW_46_stream_write(L1L2_L5),
+      barrelStubWords_2_V_full_n    => BW_46_stream_A_full_neg(L1L2_L5),
+      barrelStubWords_2_V_write     => BW_46_stream_A_write(L1L2_L5),
       barrelStubWords_3_V_din       => BW_46_stream_AV_din(L1L2_L6),
-      barrelStubWords_3_V_full_n    => BW_46_stream_full_neg(L1L2_L6),
-      barrelStubWords_3_V_write     => BW_46_stream_write(L1L2_L6)
+      barrelStubWords_3_V_full_n    => BW_46_stream_A_full_neg(L1L2_L6),
+      barrelStubWords_3_V_write     => BW_46_stream_A_write(L1L2_L6)
   );
 
 

@@ -107,13 +107,9 @@ package memUtil_pkg is
   type t_arr_FM_52_DATA is array(enum_FM_52) of std_logic_vector(51 downto 0);
   type t_arr_FM_52_NENT is array(enum_FM_52) of t_arr2_7b;
   type t_arr_BW_46_1b is array(enum_BW_46) of std_logic;
-  type t_arr_BW_46_ADDR is array(enum_BW_46) of std_logic_vector(6 downto 0);
   type t_arr_BW_46_DATA is array(enum_BW_46) of std_logic_vector(45 downto 0);
-  type t_arr_BW_46_NENT is array(enum_BW_46) of t_arr1_7b;
   type t_arr_TW_84_1b is array(enum_TW_84) of std_logic;
-  type t_arr_TW_84_ADDR is array(enum_TW_84) of std_logic_vector(6 downto 0);
   type t_arr_TW_84_DATA is array(enum_TW_84) of std_logic_vector(83 downto 0);
-  type t_arr_TW_84_NENT is array(enum_TW_84) of t_arr1_7b;
 
   -- ########################### Functions ###########################
 
