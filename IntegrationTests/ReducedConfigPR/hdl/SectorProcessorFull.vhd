@@ -83,10 +83,10 @@ entity SectorProcessorFull is
     FM_52_mem_A_wea        : out t_arr_FM_52_1b;
     FM_52_mem_AV_writeaddr : out t_arr_FM_52_ADDR;
     FM_52_mem_AV_din       : out t_arr_FM_52_DATA;
-    BW_46_stream_AV_din       : in t_arr_BW_46_DATA;
+    BW_46_stream_AV_din       : out t_arr_BW_46_DATA;
     BW_46_stream_A_full_neg   : in t_arr_BW_46_1b;
     BW_46_stream_A_write      : out t_arr_BW_46_1b;
-    TW_84_stream_AV_din       : in t_arr_TW_84_DATA;
+    TW_84_stream_AV_din       : out t_arr_TW_84_DATA;
     TW_84_stream_A_full_neg   : in t_arr_TW_84_1b;
     TW_84_stream_A_write      : out t_arr_TW_84_1b
   );

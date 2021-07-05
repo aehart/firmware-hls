@@ -17,10 +17,10 @@ entity SectorProcessor is
     DL_39_link_AV_dout       : in t_arr_DL_39_DATA;
     DL_39_link_empty_neg     : in t_arr_DL_39_1b;
     DL_39_link_read          : out t_arr_DL_39_1b;
-    BW_46_stream_AV_din       : in t_arr_BW_46_DATA;
+    BW_46_stream_AV_din       : out t_arr_BW_46_DATA;
     BW_46_stream_A_full_neg   : in t_arr_BW_46_1b;
     BW_46_stream_A_write      : out t_arr_BW_46_1b;
-    TW_84_stream_AV_din       : in t_arr_TW_84_DATA;
+    TW_84_stream_AV_din       : out t_arr_TW_84_DATA;
     TW_84_stream_A_full_neg   : in t_arr_TW_84_1b;
     TW_84_stream_A_write      : out t_arr_TW_84_1b
   );
