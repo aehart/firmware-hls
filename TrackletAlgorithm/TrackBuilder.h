@@ -65,8 +65,8 @@ void TrackBuilder(
 )
 {
 
-  const unsigned NFMPerLayer = (TrackFit<NBarrelStubs, NDiskStubs>::kNBarrelStubs > 0) ? (NFMBarrel / TrackFit<NBarrelStubs, NDiskStubs>::kNBarrelStubs) : 0;
-  const unsigned NFMPerDisk = (TrackFit<NBarrelStubs, NDiskStubs>::kNDiskStubs > 0) ? (NFMDisk / TrackFit<NBarrelStubs, NDiskStubs>::kNDiskStubs) : 0;
+  const unsigned NFMPerLayer = (NBarrelStubs > 0) ? (NFMBarrel / NBarrelStubs) : 0;
+  const unsigned NFMPerDisk = (NDiskStubs > 0) ? (NFMDisk / NDiskStubs) : 0;
 
   // Circular buffers for each of the input full-match memories.
   MyStub barrel_fm[NFMBarrel][1<<kNBitsTBBuffer];
@@ -175,7 +175,7 @@ void TrackBuilder(
     // tracklet ID and assign it to the appropriate field of the TrackFit
     // object.
     ap_uint<3> nMatches = 0; // there can be up to eight matches (3 bits)
-    barrel_stub_association : for (unsigned short j = 0; j < TrackFit<NBarrelStubs, NDiskStubs>::kNBarrelStubs; j++) {
+    barrel_stub_association : for (unsigned short j = 0; j < NBarrelStubs; j++) {
 
       ap_uint<1> barrel_stub_valid = false;
       barrel_stub_valid : for (unsigned short k = 0; k < NFMPerLayer; k++)
@@ -255,7 +255,7 @@ void TrackBuilder(
     // object that was constructed.
     if (track.getTrackValid()) {
       trackWord[nTracks] = track.getTrackWord();
-      barrel_stub_words: for (unsigned j = 0 ; j < TrackFit<NBarrelStubs, NDiskStubs>::kNBarrelStubs; j++) {
+      barrel_stub_words: for (unsigned j = 0 ; j < NBarrelStubs; j++) {
         switch (j) {
           case 0:
             barrelStubWords[j][nTracks] = track.getStubValid<0>() ? track.getBarrelStubWord<0>() : TrackFit<NBarrelStubs, NDiskStubs>::BarrelStubWord(0);
@@ -271,7 +271,7 @@ void TrackBuilder(
             break;
         }
       }
-      disk_stub_words: for (unsigned j = 0 ; j < TrackFit<NBarrelStubs, NDiskStubs>::kNDiskStubs; j++) {
+      disk_stub_words: for (unsigned j = 0 ; j < NDiskStubs; j++) {
         switch (j) {
           case 0:
             diskStubWords[j][nTracks] = track.getStubValid<4>() ? track.getDiskStubWord<4>() : TrackFit<NBarrelStubs, NDiskStubs>::DiskStubWord(0);
