@@ -5,11 +5,12 @@
 #include "MemoryTemplate.h"
 
 // TrackFitBase is where we define the bit widths.
+template<int NBarrelStubs, int NDiskStubs>
 class TrackFitBase
 {
 public:
-  static const unsigned short kNBarrelStubs = 4;
-  static const unsigned short kNDiskStubs = 4;
+  static const unsigned short kNBarrelStubs = NBarrelStubs;
+  static const unsigned short kNDiskStubs = NDiskStubs;
   static const unsigned short kNStubs = kNBarrelStubs + kNDiskStubs;
 
   enum BitWidths {
@@ -41,7 +42,8 @@ public:
 
 // Intermediate class between TrackFitBase and TrackFit where some LSBs and
 // MSBs are defined dynamically via constexpr.
-class TrackFitBits : public TrackFitBase
+template<int NBarrelStubs, int NDiskStubs>
+class TrackFitBits : public TrackFitBase<NBarrelStubs, NDiskStubs>
 {
 public:
   static constexpr unsigned kTFStubRZResidLSB(const unsigned i) {
@@ -49,45 +51,45 @@ public:
            (kNDiskStubs * kDiskStubSize + (kNBarrelStubs - i - 1) * kBarrelStubSize));
   }
   static constexpr unsigned kTFStubRZResidMSB(const unsigned i) {
-    return (i >= kNBarrelStubs ? (kTFStubRZResidLSB(i) + TrackFitBase::kTFRResidSize - 1) :
-           (kTFStubRZResidLSB(i) + TrackFitBase::kTFZResidSize - 1));
+    return (i >= kNBarrelStubs ? (kTFStubRZResidLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFRResidSize - 1) :
+           (kTFStubRZResidLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFZResidSize - 1));
   }
   static constexpr unsigned kTFStubPhiResidLSB(const unsigned i) {
     return kTFStubRZResidMSB(i) + 1;
   }
   static constexpr unsigned kTFStubPhiResidMSB(const unsigned i) {
-    return kTFStubPhiResidLSB(i) + TrackFitBase::kTFPhiResidSize - 1;
+    return kTFStubPhiResidLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFPhiResidSize - 1;
   }
   static constexpr unsigned kTFStubRLSB(const unsigned i) {
     return kTFStubPhiResidMSB(i) + 1;
   }
   static constexpr unsigned kTFStubRMSB(const unsigned i) {
-    return (i >= kNBarrelStubs ? (kTFStubRLSB(i) + TrackFitBase::kTFDiskStubRSize - 1) :
-           (kTFStubRLSB(i) + TrackFitBase::kTFBarrelStubRSize - 1));
+    return (i >= kNBarrelStubs ? (kTFStubRLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFDiskStubRSize - 1) :
+           (kTFStubRLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFBarrelStubRSize - 1));
   }
   static constexpr unsigned kTFStubIndexLSB(const unsigned i) {
     return kTFStubRMSB(i) + 1;
   }
   static constexpr unsigned kTFStubIndexMSB(const unsigned i) {
-    return (kTFStubIndexLSB(i) + TrackFitBase::kTFStubIndexSize - 1);
+    return (kTFStubIndexLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFStubIndexSize - 1);
   }
   static constexpr unsigned kTFTrackIndexLSB(const unsigned i) {
     return kTFStubIndexMSB(i) + 1;
   }
   static constexpr unsigned kTFTrackIndexMSB(const unsigned i) {
-    return (kTFTrackIndexLSB(i) + TrackFitBase::kTFTrackIndexSize - 1);
+    return (kTFTrackIndexLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFTrackIndexSize - 1);
   }
   static constexpr unsigned kTFStubValidLSB(const unsigned i) {
     return kTFTrackIndexMSB(i) + 1;
   }
   static constexpr unsigned kTFStubValidMSB(const unsigned i) {
-    return (kTFStubValidLSB(i) + TrackFitBase::kTFValidSize - 1);
+    return (kTFStubValidLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFValidSize - 1);
   }
   static constexpr unsigned kTFHitCountLSB(const unsigned i) {
-    return (kTFStubValidMSB(0) + (kNStubs - i - 1) * TrackFitBase::kTFHitCountSize + 1);
+    return (kTFStubValidMSB(0) + (kNStubs - i - 1) * TrackFitBase<NBarrelStubs, NDiskStubs>::kTFHitCountSize + 1);
   }
   static constexpr unsigned kTFHitCountMSB(const unsigned i) {
-    return (kTFHitCountLSB(i) + TrackFitBase::kTFHitCountSize - 1);
+    return (kTFHitCountLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFHitCountSize - 1);
   }
 };
 
@@ -95,47 +97,48 @@ public:
 // Currently The TrackFit object is specific to L1L2-seeded tracks, containing
 // four matched barrel stubs and four matched disk stubs, as well as a track
 // word that contains the tracklet parameters.
-class TrackFit : public TrackFitBits
+template<int NBarrelStubs, int NDiskStubs>
+class TrackFit : public TrackFitBits<NBarrelStubs, NDiskStubs>
 {
 public:
   enum BitLocations {
     // The location of the least significant bit (LSB) and most significant bit (MSB) in the TrackFitMemory word for different fields
-    kTFHitMapLSB = TrackFitBits::kTFStubValidMSB(0) + 1,
-    kTFHitMapMSB = kTFHitMapLSB + TrackFitBase::kTFHitMapSize - 1,
+    kTFHitMapLSB = TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubValidMSB(0) + 1,
+    kTFHitMapMSB = kTFHitMapLSB + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFHitMapSize - 1,
     kTFTLSB = kTFHitMapMSB + 1,
-    kTFTMSB = kTFTLSB + TrackFitBase::kTFTSize - 1,
+    kTFTMSB = kTFTLSB + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFTSize - 1,
     kTFZ0LSB = kTFTMSB + 1,
-    kTFZ0MSB = kTFZ0LSB + TrackFitBase::kTFZ0Size - 1,
+    kTFZ0MSB = kTFZ0LSB + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFZ0Size - 1,
     kTFPhi0LSB = kTFZ0MSB + 1,
-    kTFPhi0MSB = kTFPhi0LSB + TrackFitBase::kTFPhi0Size - 1,
+    kTFPhi0MSB = kTFPhi0LSB + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFPhi0Size - 1,
     kTFRinvLSB = kTFPhi0MSB + 1,
-    kTFRinvMSB = kTFRinvLSB + TrackFitBase::kTFRinvSize - 1,
+    kTFRinvMSB = kTFRinvLSB + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFRinvSize - 1,
     kTFSeedTypeLSB = kTFRinvMSB + 1,
-    kTFSeedTypeMSB = kTFSeedTypeLSB + TrackFitBase::kTFSeedTypeSize - 1,
+    kTFSeedTypeMSB = kTFSeedTypeLSB + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFSeedTypeSize - 1,
     kTFTrackValidLSB = kTFSeedTypeMSB + 1,
-    kTFTrackValidMSB = kTFTrackValidLSB + TrackFitBase::kTFValidSize - 1
+    kTFTrackValidMSB = kTFTrackValidLSB + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFValidSize - 1
   };
 
-  typedef ap_uint<TrackFitBase::kTFValidSize> TFVALID;
-  typedef ap_uint<TrackFitBase::kTFSeedTypeSize> TFSEEDTYPE;
-  typedef ap_int<TrackFitBase::kTFRinvSize> TFRINV;
-  typedef ap_uint<TrackFitBase::kTFPhi0Size> TFPHI0;
-  typedef ap_int<TrackFitBase::kTFZ0Size> TFZ0;
-  typedef ap_int<TrackFitBase::kTFTSize> TFT;
-  typedef ap_uint<TrackFitBase::kTFHitMapSize> TFHITMAP;
-  typedef ap_uint<TrackFitBase::kTFHitCountSize> TFHITCOUNT;
-  typedef ap_uint<TrackFitBase::kTFTrackIndexSize> TFTRACKINDEX;
-  typedef ap_uint<TrackFitBase::kTFStubIndexSize> TFSTUBINDEX;
-  typedef ap_uint<TrackFitBase::kTFBarrelStubRSize> TFBARRELSTUBR;
-  typedef ap_uint<TrackFitBase::kTFDiskStubRSize> TFDISKSTUBR;
-  typedef ap_int<TrackFitBase::kTFPhiResidSize> TFSTUBPHIRESID;
-  typedef ap_int<TrackFitBase::kTFZResidSize> TFSTUBZRESID;
-  typedef ap_int<TrackFitBase::kTFRResidSize> TFSTUBRRESID;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFValidSize> TFVALID;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFSeedTypeSize> TFSEEDTYPE;
+  typedef ap_int<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFRinvSize> TFRINV;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFPhi0Size> TFPHI0;
+  typedef ap_int<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFZ0Size> TFZ0;
+  typedef ap_int<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFTSize> TFT;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFHitMapSize> TFHITMAP;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFHitCountSize> TFHITCOUNT;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFTrackIndexSize> TFTRACKINDEX;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFStubIndexSize> TFSTUBINDEX;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFBarrelStubRSize> TFBARRELSTUBR;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFDiskStubRSize> TFDISKSTUBR;
+  typedef ap_int<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFPhiResidSize> TFSTUBPHIRESID;
+  typedef ap_int<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFZResidSize> TFSTUBZRESID;
+  typedef ap_int<TrackFitBase<NBarrelStubs, NDiskStubs>::kTFRResidSize> TFSTUBRRESID;
 
-  typedef ap_uint<TrackFitBase::kTrackWordSize> TrackWord;
-  typedef ap_uint<TrackFitBase::kBarrelStubSize> BarrelStubWord;
-  typedef ap_uint<TrackFitBase::kDiskStubSize> DiskStubWord;
-  typedef ap_uint<TrackFitBase::kTrackFitSize> TrackFitData;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kTrackWordSize> TrackWord;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kBarrelStubSize> BarrelStubWord;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kDiskStubSize> DiskStubWord;
+  typedef ap_uint<TrackFitBase<NBarrelStubs, NDiskStubs>::kTrackFitSize> TrackFitData;
 
   // Constructors
   TrackFit(const TrackFitData& newdata):
@@ -168,7 +171,7 @@ public:
   #endif
 
   // Getter
-  static constexpr int getWidth() {return TrackFitBase::kTrackFitSize;}
+  static constexpr int getWidth() {return TrackFitBase<NBarrelStubs, NDiskStubs>::kTrackFitSize;}
 
   TrackFitData raw() const {return data_;}
 
@@ -212,55 +215,55 @@ public:
   template<uint8_t Hit>
   TFHITCOUNT getHitCount() const {
     static_assert(Hit >= 0 && Hit <= kNStubs - 1, "Invalid hit number.");
-    return data_.range(TrackFitBits::kTFHitCountMSB(Hit),TrackFitBits::kTFHitCountLSB(Hit));
+    return data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFHitCountMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFHitCountLSB(Hit));
   }
 
   template<uint8_t Hit>
   TFVALID getStubValid() const {
     static_assert(Hit >= 0 && Hit <= kNStubs - 1, "Invalid hit number.");
-    return data_.range(TrackFitBits::kTFStubValidMSB(Hit),TrackFitBits::kTFStubValidLSB(Hit));
+    return data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubValidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubValidLSB(Hit));
   }
 
   template<uint8_t Hit>
   TFTRACKINDEX getTrackIndex() const {
     static_assert(Hit >= 0 && Hit <= kNStubs - 1, "Invalid hit number.");
-    return data_.range(TrackFitBits::kTFTrackIndexMSB(Hit),TrackFitBits::kTFTrackIndexLSB(Hit));
+    return data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFTrackIndexMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFTrackIndexLSB(Hit));
   }
 
   template<uint8_t Hit>
   TFSTUBINDEX getStubIndex() const {
     static_assert(Hit >= 0 && Hit <= kNStubs - 1, "Invalid hit number.");
-    return data_.range(TrackFitBits::kTFStubIndexMSB(Hit),TrackFitBits::kTFStubIndexLSB(Hit));
+    return data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubIndexMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubIndexLSB(Hit));
   }
 
   template<uint8_t Hit>
   TFBARRELSTUBR getBarrelStubR() const {
     static_assert(Hit >= 0 && Hit <= kNBarrelStubs - 1, "Invalid hit number.");
-    return data_.range(TrackFitBits::kTFStubRMSB(Hit),TrackFitBits::kTFStubRLSB(Hit));
+    return data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRLSB(Hit));
   }
 
   template<uint8_t Hit>
   TFDISKSTUBR getDiskStubR() const {
     static_assert(Hit >= kNBarrelStubs && Hit <= kNStubs - 1, "Invalid hit number.");
-    return data_.range(TrackFitBits::kTFStubRMSB(Hit),TrackFitBits::kTFStubRLSB(Hit));
+    return data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRLSB(Hit));
   }
 
   template<uint8_t Hit>
   TFSTUBPHIRESID getStubPhiResid() const {
     static_assert(Hit >= 0 && Hit <= kNStubs - 1, "Invalid hit number.");
-    return data_.range(TrackFitBits::kTFStubPhiResidMSB(Hit),TrackFitBits::kTFStubPhiResidLSB(Hit));
+    return data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubPhiResidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubPhiResidLSB(Hit));
   }
 
   template<uint8_t Hit>
   TFSTUBZRESID getStubZResid() const {
     static_assert(Hit >= 0 && Hit <= kNBarrelStubs - 1, "Invalid hit number.");
-    return data_.range(TrackFitBits::kTFStubRZResidMSB(Hit),TrackFitBits::kTFStubRZResidLSB(Hit));
+    return data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidLSB(Hit));
   }
 
   template<uint8_t Hit>
   TFSTUBRRESID getStubRResid() const {
     static_assert(Hit >= kNBarrelStubs && Hit <= kNStubs - 1, "Invalid hit number.");
-    return data_.range(TrackFitBits::kTFStubRZResidMSB(Hit),TrackFitBits::kTFStubRZResidLSB(Hit));
+    return data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidLSB(Hit));
   }
 
   TrackWord getTrackWord() const {
@@ -270,13 +273,13 @@ public:
   template<uint8_t Hit>
   BarrelStubWord getBarrelStubWord() const {
     static_assert(Hit >= 0 && Hit <= kNBarrelStubs - 1, "Invalid hit number.");
-    return data_.range(TrackFitBits::kTFStubValidMSB(Hit),TrackFitBits::kTFStubRZResidLSB(Hit));
+    return data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubValidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidLSB(Hit));
   }
 
   template<uint8_t Hit>
   DiskStubWord getDiskStubWord() const {
     static_assert(Hit >= kNBarrelStubs && Hit <= kNStubs - 1, "Invalid hit number.");
-    return data_.range(TrackFitBits::kTFStubValidMSB(Hit),TrackFitBits::kTFStubRZResidLSB(Hit));
+    return data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubValidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidLSB(Hit));
   }
 
   // Setter
@@ -311,55 +314,55 @@ public:
   template<uint8_t Hit>
   void setHitCount(const TFHITCOUNT hitcount) {
     static_assert(Hit >= 0 && Hit <= kNStubs - 1, "Invalid hit number.");
-    data_.range(TrackFitBits::kTFHitCountMSB(Hit),TrackFitBits::kTFHitCountLSB(Hit)) = hitcount;
+    data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFHitCountMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFHitCountLSB(Hit)) = hitcount;
   }
 
   template<uint8_t Hit>
   void setStubValid(const TFVALID valid) {
     static_assert(Hit >= 0 && Hit <= kNStubs - 1, "Invalid hit number.");
-    data_.range(TrackFitBits::kTFStubValidMSB(Hit),TrackFitBits::kTFStubValidLSB(Hit)) = valid;
+    data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubValidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubValidLSB(Hit)) = valid;
   }
 
   template<uint8_t Hit>
   void setTrackIndex(const TFTRACKINDEX trackindex) {
     static_assert(Hit >= 0 && Hit <= kNStubs - 1, "Invalid hit number.");
-    data_.range(TrackFitBits::kTFTrackIndexMSB(Hit),TrackFitBits::kTFTrackIndexLSB(Hit)) = trackindex;
+    data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFTrackIndexMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFTrackIndexLSB(Hit)) = trackindex;
   }
 
   template<uint8_t Hit>
   void setStubIndex(const TFSTUBINDEX stubindex) {
     static_assert(Hit >= 0 && Hit <= kNStubs - 1, "Invalid hit number.");
-    data_.range(TrackFitBits::kTFStubIndexMSB(Hit),TrackFitBits::kTFStubIndexLSB(Hit)) = stubindex;
+    data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubIndexMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubIndexLSB(Hit)) = stubindex;
   }
 
   template<uint8_t Hit>
   void setBarrelStubR(const TFBARRELSTUBR barrelstubr) {
     static_assert(Hit >= 0 && Hit <= kNBarrelStubs - 1, "Invalid hit number.");
-    data_.range(TrackFitBits::kTFStubRMSB(Hit),TrackFitBits::kTFStubRLSB(Hit)) = barrelstubr;
+    data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRLSB(Hit)) = barrelstubr;
   }
 
   template<uint8_t Hit>
   void setDiskStubR(const TFDISKSTUBR diskstubr) {
     static_assert(Hit >= kNBarrelStubs && Hit <= kNStubs - 1, "Invalid hit number.");
-    data_.range(TrackFitBits::kTFStubRMSB(Hit),TrackFitBits::kTFStubRLSB(Hit)) = diskstubr;
+    data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRLSB(Hit)) = diskstubr;
   }
 
   template<uint8_t Hit>
   void setStubPhiResid(const TFSTUBPHIRESID stubphiresid) {
     static_assert(Hit >= 0 && Hit <= kNStubs - 1, "Invalid hit number.");
-    data_.range(TrackFitBits::kTFStubPhiResidMSB(Hit),TrackFitBits::kTFStubPhiResidLSB(Hit)) = stubphiresid;
+    data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubPhiResidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubPhiResidLSB(Hit)) = stubphiresid;
   }
 
   template<uint8_t Hit>
   void setStubZResid(const TFSTUBZRESID stubzresid) {
     static_assert(Hit >= 0 && Hit <= kNBarrelStubs - 1, "Invalid hit number.");
-    data_.range(TrackFitBits::kTFStubRZResidMSB(Hit),TrackFitBits::kTFStubRZResidLSB(Hit)) = stubzresid;
+    data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidLSB(Hit)) = stubzresid;
   }
 
   template<uint8_t Hit>
   void setStubRResid(const TFSTUBRRESID stubrresid) {
     static_assert(Hit >= kNBarrelStubs && Hit <= kNStubs - 1, "Invalid hit number.");
-    data_.range(TrackFitBits::kTFStubRZResidMSB(Hit),TrackFitBits::kTFStubRZResidLSB(Hit)) = stubrresid;
+    data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidLSB(Hit)) = stubrresid;
   }
 
   template<uint8_t Hit>
@@ -391,13 +394,13 @@ public:
   template<uint8_t Hit>
   void setBarrelStubWord(const BarrelStubWord &word) {
     static_assert(Hit >= 0 && Hit <= kNBarrelStubs - 1, "Invalid hit number.");
-    data_.range(TrackFitBits::kTFStubValidMSB(Hit),TrackFitBits::kTFStubRZResidLSB(Hit)) = word;
+    data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubValidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidLSB(Hit)) = word;
   }
 
   template<uint8_t Hit>
   void setDiskStubWord(const DiskStubWord &word) {
     static_assert(Hit >= kNBarrelStubs && Hit <= kNStubs - 1, "Invalid hit number.");
-    data_.range(TrackFitBits::kTFStubValidMSB(Hit),TrackFitBits::kTFStubRZResidLSB(Hit)) = word;
+    data_.range(TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubValidMSB(Hit),TrackFitBits<NBarrelStubs, NDiskStubs>::kTFStubRZResidLSB(Hit)) = word;
   }
 
 private:
@@ -407,6 +410,6 @@ private:
 };
 
 // Memory definition
-using TrackFitMemory = MemoryTemplate<TrackFit, 1, kNBits_MemAddr>;
+template<int NBarrelStubs, int NDiskStubs> using TrackFitMemory = MemoryTemplate<TrackFit<NBarrelStubs, NDiskStubs>, 1, kNBits_MemAddr>;
 
 #endif

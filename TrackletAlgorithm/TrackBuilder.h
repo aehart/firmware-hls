@@ -52,21 +52,21 @@ getFM(const BXType bx, const FullMatchMemory<RegionType> &fullMatches, const uns
 
 // TrackBuilder top template function
 // !!! CURRENTLY ONLY TESTED FOR L1L2 !!!
-template<unsigned NFMBarrel, unsigned NFMDisk>
+template<unsigned NFMBarrel, unsigned NFMDisk, unsigned NBarrelStubs, unsigned NDiskStubs>
 void TrackBuilder(
     const BXType bx,
     const TrackletParameterMemory trackletParameters[],
     const FullMatchMemory<BARREL> barrelFullMatches[],
     const FullMatchMemory<DISK> diskFullMatches[],
     BXType &bx_o,
-    TrackFit::TrackWord trackWord[],
-    TrackFit::BarrelStubWord barrelStubWords[][kMaxProc],
-    TrackFit::DiskStubWord diskStubWords[][kMaxProc]
+    TrackFit<NBarrelStubs, NDiskStubs>::TrackWord trackWord[],
+    TrackFit<NBarrelStubs, NDiskStubs>::BarrelStubWord barrelStubWords[][kMaxProc],
+    TrackFit<NBarrelStubs, NDiskStubs>::DiskStubWord diskStubWords[][kMaxProc]
 )
 {
 
-  const unsigned NFMPerLayer = NFMBarrel / TrackFit::kNBarrelStubs;
-  const unsigned NFMPerDisk = NFMDisk / TrackFit::kNDiskStubs;
+  const unsigned NFMPerLayer = (TrackFit<NBarrelStubs, NDiskStubs>::kNBarrelStubs > 0) ? (NFMBarrel / TrackFit<NBarrelStubs, NDiskStubs>::kNBarrelStubs) : 0;
+  const unsigned NFMPerDisk = (TrackFit<NBarrelStubs, NDiskStubs>::kNDiskStubs > 0) ? (NFMDisk / TrackFit<NBarrelStubs, NDiskStubs>::kNDiskStubs) : 0;
 
   // Circular buffers for each of the input full-match memories.
   MyStub barrel_fm[NFMBarrel][1<<kNBitsTBBuffer];
@@ -163,7 +163,7 @@ void TrackBuilder(
     // Initialize a TrackFit object using the tracklet parameters associated
     // with the minimum tracklet ID.
     const TCIDType &TCID = (min_id != kInvalidTrackletID) ? (min_id >> kNBits_MemAddr) : TrackletIDType(0);
-    TrackFit track(nTracks, TCID >> kNBitsITC);
+    TrackFit<NBarrelStubs, NDiskStubs> track(nTracks, TCID >> kNBitsITC);
     const IndexType &trackletIndex = (min_id != kInvalidTrackletID) ? (min_id & TrackletIDType(0x7F)) : TrackletIDType(0);
     const auto &tpar = trackletParameters[TCID].read_mem(bx, trackletIndex);
     track.setRinv(tpar.getRinv());
@@ -175,7 +175,7 @@ void TrackBuilder(
     // tracklet ID and assign it to the appropriate field of the TrackFit
     // object.
     ap_uint<3> nMatches = 0; // there can be up to eight matches (3 bits)
-    barrel_stub_association : for (unsigned short j = 0; j < TrackFit::kNBarrelStubs; j++) {
+    barrel_stub_association : for (unsigned short j = 0; j < TrackFit<NBarrelStubs, NDiskStubs>::kNBarrelStubs; j++) {
 
       ap_uint<1> barrel_stub_valid = false;
       barrel_stub_valid : for (unsigned short k = 0; k < NFMPerLayer; k++)
@@ -183,15 +183,20 @@ void TrackBuilder(
       nMatches += (barrel_stub_valid ? 1 : 0);
 
       // The following code is currently specific to L1L2 with four FullMatch memories per layer.
-      static_assert(NFMPerLayer == 4, "Only tested for L1L2 with four FullMatch memories per layer.");
-      const auto &barrel_stub = (barrel_valid[j * 4]     ? barrelFullMatches[j * 4].read_mem(bx, barrel_index[j * 4]) :
+      //static_assert(NFMPerLayer == 4, "Only tested for L1L2 with four FullMatch memories per layer.");
+      /*const auto &barrel_stub = (barrel_valid[j * 4]     ? barrelFullMatches[j * 4].read_mem(bx, barrel_index[j * 4]) :
                                 (barrel_valid[j * 4 + 1] ? barrelFullMatches[j * 4 + 1].read_mem(bx, barrel_index[j * 4 + 1]) :
-                                (barrel_valid[j * 4 + 2] ? barrelFullMatches[j * 4 + 2].read_mem(bx, barrel_index[j * 4 + 2]) : barrelFullMatches[j * 4 + 3].read_mem(bx, barrel_index[j * 4 + 3]))));
+                                (barrel_valid[j * 4 + 2] ? barrelFullMatches[j * 4 + 2].read_mem(bx, barrel_index[j * 4 + 2]) : barrelFullMatches[j * 4 + 3].read_mem(bx, barrel_index[j * 4 + 3]))));*/
 
-      const auto &barrel_stub_index = (barrel_stub_valid ? barrel_stub.getStubIndex() : FullMatch<BARREL>::FMSTUBINDEX(0));
-      const auto &barrel_stub_r = (barrel_stub_valid ? barrel_stub.getStubR() : FullMatch<BARREL>::FMSTUBR(0));
-      const auto &barrel_phi_res = (barrel_stub_valid ? barrel_stub.getPhiRes() : FullMatch<BARREL>::FMPHIRES(0));
-      const auto &barrel_z_res = (barrel_stub_valid ? barrel_stub.getZRes() : FullMatch<BARREL>::FMZRES(0));
+      const FullMatch<BARREL> *barrel_stub = nullptr;
+      for (short k = NFMPerLayer - 1; k > 0; k--)
+        if (barrel_valid[j * NFMPerLayer + k])
+          barrel_stub = &barrelFullMatches[j * NFMPerLayer + k].read_mem(bx, barrel_index[j * NFMPerLayer + k]);
+
+      const auto &barrel_stub_index = (barrel_stub_valid ? barrel_stub->getStubIndex() : FullMatch<BARREL>::FMSTUBINDEX(0));
+      const auto &barrel_stub_r = (barrel_stub_valid ? barrel_stub->getStubR() : FullMatch<BARREL>::FMSTUBR(0));
+      const auto &barrel_phi_res = (barrel_stub_valid ? barrel_stub->getPhiRes() : FullMatch<BARREL>::FMPHIRES(0));
+      const auto &barrel_z_res = (barrel_stub_valid ? barrel_stub->getZRes() : FullMatch<BARREL>::FMZRES(0));
 
       switch (j) {
         case 0:
@@ -250,35 +255,35 @@ void TrackBuilder(
     // object that was constructed.
     if (track.getTrackValid()) {
       trackWord[nTracks] = track.getTrackWord();
-      barrel_stub_words: for (unsigned j = 0 ; j < TrackFit::kNBarrelStubs; j++) {
+      barrel_stub_words: for (unsigned j = 0 ; j < TrackFit<NBarrelStubs, NDiskStubs>::kNBarrelStubs; j++) {
         switch (j) {
           case 0:
-            barrelStubWords[j][nTracks] = track.getStubValid<0>() ? track.getBarrelStubWord<0>() : TrackFit::BarrelStubWord(0);
+            barrelStubWords[j][nTracks] = track.getStubValid<0>() ? track.getBarrelStubWord<0>() : TrackFit<NBarrelStubs, NDiskStubs>::BarrelStubWord(0);
             break;
           case 1:
-            barrelStubWords[j][nTracks] = track.getStubValid<1>() ? track.getBarrelStubWord<1>() : TrackFit::BarrelStubWord(0);
+            barrelStubWords[j][nTracks] = track.getStubValid<1>() ? track.getBarrelStubWord<1>() : TrackFit<NBarrelStubs, NDiskStubs>::BarrelStubWord(0);
             break;
           case 2:
-            barrelStubWords[j][nTracks] = track.getStubValid<2>() ? track.getBarrelStubWord<2>() : TrackFit::BarrelStubWord(0);
+            barrelStubWords[j][nTracks] = track.getStubValid<2>() ? track.getBarrelStubWord<2>() : TrackFit<NBarrelStubs, NDiskStubs>::BarrelStubWord(0);
             break;
           case 3:
-            barrelStubWords[j][nTracks] = track.getStubValid<3>() ? track.getBarrelStubWord<3>() : TrackFit::BarrelStubWord(0);
+            barrelStubWords[j][nTracks] = track.getStubValid<3>() ? track.getBarrelStubWord<3>() : TrackFit<NBarrelStubs, NDiskStubs>::BarrelStubWord(0);
             break;
         }
       }
-      disk_stub_words: for (unsigned j = 0 ; j < TrackFit::kNDiskStubs; j++) {
+      disk_stub_words: for (unsigned j = 0 ; j < TrackFit<NBarrelStubs, NDiskStubs>::kNDiskStubs; j++) {
         switch (j) {
           case 0:
-            diskStubWords[j][nTracks] = track.getStubValid<4>() ? track.getDiskStubWord<4>() : TrackFit::DiskStubWord(0);
+            diskStubWords[j][nTracks] = track.getStubValid<4>() ? track.getDiskStubWord<4>() : TrackFit<NBarrelStubs, NDiskStubs>::DiskStubWord(0);
             break;
           case 1:
-            diskStubWords[j][nTracks] = track.getStubValid<5>() ? track.getDiskStubWord<5>() : TrackFit::DiskStubWord(0);
+            diskStubWords[j][nTracks] = track.getStubValid<5>() ? track.getDiskStubWord<5>() : TrackFit<NBarrelStubs, NDiskStubs>::DiskStubWord(0);
             break;
           case 2:
-            diskStubWords[j][nTracks] = track.getStubValid<6>() ? track.getDiskStubWord<6>() : TrackFit::DiskStubWord(0);
+            diskStubWords[j][nTracks] = track.getStubValid<6>() ? track.getDiskStubWord<6>() : TrackFit<NBarrelStubs, NDiskStubs>::DiskStubWord(0);
             break;
           case 3:
-            diskStubWords[j][nTracks] = track.getStubValid<7>() ? track.getDiskStubWord<7>() : TrackFit::DiskStubWord(0);
+            diskStubWords[j][nTracks] = track.getStubValid<7>() ? track.getDiskStubWord<7>() : TrackFit<NBarrelStubs, NDiskStubs>::DiskStubWord(0);
             break;
         }
       }

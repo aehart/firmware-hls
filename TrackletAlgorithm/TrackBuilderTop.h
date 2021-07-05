@@ -10,9 +10,9 @@ void TrackBuilder_L1L2(
     const FullMatchMemory<BARREL> barrelFullMatches[],
     const FullMatchMemory<DISK> diskFullMatches[],
     BXType &bx_o,
-    TrackFit::TrackWord trackWord[],
-    TrackFit::BarrelStubWord barrelStubWords[][kMaxProc],
-    TrackFit::DiskStubWord diskStubWords[][kMaxProc]
+    TrackFit<4, 4>::TrackWord trackWord[],
+    TrackFit<4, 4>::BarrelStubWord barrelStubWords[][kMaxProc],
+    TrackFit<4, 4>::DiskStubWord diskStubWords[][kMaxProc]
 );
 
 #endif
