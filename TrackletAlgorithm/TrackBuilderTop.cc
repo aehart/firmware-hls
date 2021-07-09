@@ -8,8 +8,8 @@ void TrackBuilder_L1L2(
     const FullMatchMemory<DISK> diskFullMatches[16],
     BXType &bx_o,
     TrackFit<4, 4>::TrackWord trackWord[kMaxProc],
-    TrackFit<4, 4>::BarrelStubWord barrelStubWords[TrackFit::kNBarrelStubs][kMaxProc],
-    TrackFit<4, 4>::DiskStubWord diskStubWords[TrackFit::kNDiskStubs][kMaxProc]
+    TrackFit<4, 4>::BarrelStubWord barrelStubWords[4][kMaxProc],
+    TrackFit<4, 4>::DiskStubWord diskStubWords[4][kMaxProc]
 )
 {
 #pragma HLS inline recursive
@@ -26,7 +26,7 @@ void TrackBuilder_L1L2(
 #pragma HLS stream variable=barrelStubWords depth=1 dim=2
 #pragma HLS stream variable=diskStubWords depth=1 dim=2
 
-  TrackBuilder<16, 16>(
+  TrackBuilder<16, 16, 4, 4>(
       bx,
       trackletParameters,
       barrelFullMatches,
