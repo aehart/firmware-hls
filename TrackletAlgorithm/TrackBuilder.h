@@ -50,6 +50,68 @@ getFM(const BXType bx, const FullMatchMemory<RegionType> &fullMatches, const uns
   }
 }
 
+template<unsigned T>
+struct type{};
+
+template<unsigned I, unsigned NBarrelStubs, unsigned NDiskStubs> void
+addBarrelStub(type<NBarrelStubs - I>, const ap_uint<1> stub_valid, const FullMatch<BARREL>::FMSTUBINDEX stub_index, const FullMatch<BARREL>::FMSTUBR stub_r, const FullMatch<BARREL>::FMPHIRES phi_res, const FullMatch<BARREL>::FMZRES z_res, TrackFit<NBarrelStubs, NDiskStubs> &track)
+{
+  track.template setBarrelStub<I>(stub_valid, stub_index, stub_r, phi_res, z_res);
+}
+
+template<unsigned I, unsigned NBarrelStubs, unsigned NDiskStubs> void
+addDiskStub(type<NDiskStubs - I>, const ap_uint<1> stub_valid, const FullMatch<DISK>::FMSTUBINDEX stub_index, const FullMatch<DISK>::FMSTUBR stub_r, const FullMatch<DISK>::FMPHIRES phi_res, const FullMatch<DISK>::FMZRES z_res, TrackFit<NBarrelStubs, NDiskStubs> &track)
+{
+  track.template setDiskStub<NBarrelStubs + I>(stub_valid, stub_index, stub_r, phi_res, z_res);
+}
+
+template<unsigned I, unsigned NBarrelStubs, unsigned NDiskStubs> void
+addBarrelStub(type<0>, const ap_uint<1> stub_valid, const FullMatch<BARREL>::FMSTUBINDEX stub_index, const FullMatch<BARREL>::FMSTUBR stub_r, const FullMatch<BARREL>::FMPHIRES phi_res, const FullMatch<BARREL>::FMZRES z_res, TrackFit<NBarrelStubs, NDiskStubs> &track) {}
+
+template<unsigned I, unsigned NBarrelStubs, unsigned NDiskStubs> void
+addDiskStub(type<0>, const ap_uint<1> stub_valid, const FullMatch<DISK>::FMSTUBINDEX stub_index, const FullMatch<DISK>::FMSTUBR stub_r, const FullMatch<DISK>::FMPHIRES phi_res, const FullMatch<DISK>::FMZRES z_res, TrackFit<NBarrelStubs, NDiskStubs> &track) {}
+
+template<unsigned I, unsigned NBarrelStubs, unsigned NDiskStubs> void
+addBarrelStub(type<0>, const ap_uint<1> stub_valid, const FullMatch<DISK>::FMSTUBINDEX stub_index, const FullMatch<DISK>::FMSTUBR stub_r, const FullMatch<DISK>::FMPHIRES phi_res, const FullMatch<DISK>::FMZRES z_res, TrackFit<NBarrelStubs, NDiskStubs> &track) {}
+
+template<unsigned I, unsigned NBarrelStubs, unsigned NDiskStubs> void
+addDiskStub(type<0>, const ap_uint<1> stub_valid, const FullMatch<BARREL>::FMSTUBINDEX stub_index, const FullMatch<BARREL>::FMSTUBR stub_r, const FullMatch<BARREL>::FMPHIRES phi_res, const FullMatch<BARREL>::FMZRES z_res, TrackFit<NBarrelStubs, NDiskStubs> &track) {}
+
+template<unsigned FMTYPE, unsigned I, unsigned NBarrelStubs, unsigned NDiskStubs, unsigned NFMPerLayer, unsigned NFMPerDisk> void
+addStubs(const ap_uint<1> valid[], ap_uint<3> &nMatches, const FullMatchMemory<FMTYPE> fullMatches[], const BXType bx, const IndexType index[], TrackFit<NBarrelStubs, NDiskStubs> &track)
+{
+    if ((FMTYPE == BARREL && I >= NBarrelStubs)
+     || (FMTYPE == DISK && I >= NDiskStubs))
+      return;
+
+    constexpr unsigned NFM = (FMTYPE == BARREL ? NFMPerLayer : NFMPerDisk);
+
+    ap_uint<1> stub_valid = false;
+    stub_valid : for (short k = 0; k < NFM; k++)
+      stub_valid = (stub_valid || valid[I * NFM + k]);
+    nMatches += (stub_valid ? 1 : 0);
+
+    static_assert(NFM <= 4, "Number of FM memories per layer/disk cannot exceed four.");
+    const auto &stub = ((NFM > 3 && valid[I * NFM + 3]) ? fullMatches[I * NFM + 3].read_mem(bx, index[I * NFM + 3]) :
+                       ((NFM > 2 && valid[I * NFM + 2]) ? fullMatches[I * NFM + 2].read_mem(bx, index[I * NFM + 2]) :
+                       ((NFM > 1 && valid[I * NFM + 1]) ? fullMatches[I * NFM + 1].read_mem(bx, index[I * NFM + 1]) :
+                                                          fullMatches[I * NFM].read_mem(bx, index[I * NFM]))));
+
+    const auto &stub_index = (stub_valid ? stub.getStubIndex() : typename FullMatch<FMTYPE>::FMSTUBINDEX(0));
+    const auto &stub_r     = (stub_valid ? stub.getStubR()     : typename FullMatch<FMTYPE>::FMSTUBR(0));
+    const auto &phi_res    = (stub_valid ? stub.getPhiRes()    : typename FullMatch<FMTYPE>::FMPHIRES(0));
+    const auto &z_res      = (stub_valid ? stub.getZRes()      : typename FullMatch<FMTYPE>::FMZRES(0));
+
+    if (FMTYPE == BARREL)
+      //track.template setBarrelStub<I>(stub_valid, stub_index, stub_r, phi_res, z_res);
+      addBarrelStub<I, NBarrelStubs, NDiskStubs>(type<NBarrelStubs>{}, type<NBarrelStubs - I>{}, stub_valid, stub_index, stub_r, phi_res, z_res, track);
+    else
+      //track.template setDiskStub<NBarrelStubs + I>(stub_valid, stub_index, stub_r, phi_res, z_res);
+      addDiskStub<I, NBarrelStubs, NDiskStubs>(type<NDiskStubs>{}, type<NDiskStubs - I>{}, stub_valid, stub_index, stub_r, phi_res, z_res, track);
+
+    addStubs<FMTYPE, I + 1, NBarrelStubs, NDiskStubs, NFMPerLayer, NFMPerDisk>(valid, nMatches, fullMatches, bx, index, track);
+}
+
 // TrackBuilder top template function
 // !!! CURRENTLY ONLY TESTED FOR L1L2 !!!
 template<unsigned NFMBarrel, unsigned NFMDisk, unsigned NBarrelStubs, unsigned NDiskStubs>
@@ -65,8 +127,8 @@ void TrackBuilder(
 )
 {
 
-  const unsigned NFMPerLayer = (NBarrelStubs > 0) ? (NFMBarrel / NBarrelStubs) : 0;
-  const unsigned NFMPerDisk = (NDiskStubs > 0) ? (NFMDisk / NDiskStubs) : 0;
+  constexpr unsigned NFMPerLayer = (NBarrelStubs > 0) ? (NFMBarrel / NBarrelStubs) : 0;
+  constexpr unsigned NFMPerDisk = (NDiskStubs > 0) ? (NFMDisk / NDiskStubs) : 0;
 
   // Circular buffers for each of the input full-match memories.
   MyStub barrel_fm[NFMBarrel][1<<kNBitsTBBuffer];
@@ -82,14 +144,14 @@ void TrackBuilder(
   ap_uint<kNBitsTBBuffer> barrel_write_index[NFMBarrel];
   ap_uint<kNBitsTBBuffer> disk_write_index[NFMDisk];
 
-  initialize_barrel_indices : for (unsigned short i = 0; i < NFMBarrel; i++) {
+  initialize_barrel_indices : for (short i = 0; i < NFMBarrel; i++) {
 #pragma HLS unroll
     barrel_mem_index[i] = 0;
     barrel_read_index[i] = 0;
     barrel_write_index[i] = 0;
   }
 
-  initialize_disk_indices : for (unsigned short i = 0; i < NFMDisk; i++) {
+  initialize_disk_indices : for (short i = 0; i < NFMDisk; i++) {
 #pragma HLS unroll
     disk_mem_index[i] = 0;
     disk_read_index[i] = 0;
@@ -114,7 +176,7 @@ void TrackBuilder(
 
     // First determine the minimum tracklet ID from the current set of full
     // matches.
-    barrel_min_id : for (unsigned short j = 0; j < NFMBarrel; j++) {
+    barrel_min_id : for (short j = 0; j < NFMBarrel; j++) {
 
       const auto &barrel_stub_0 = barrel_fm[j][barrel_read_index[j]];
       const auto &barrel_id_0 = barrel_stub_0.id();
@@ -122,13 +184,13 @@ void TrackBuilder(
       barrel_valid[j] = (!empty && barrel_id_0 != kInvalidTrackletID);
 
       // Compare the given barrel and disk IDs against each barrel ID.
-      barrel_barrel_id_comp : for (unsigned short k = 0; k < NFMBarrel; k++) {
+      barrel_barrel_id_comp : for (short k = 0; k < NFMBarrel; k++) {
         const auto &barrel_stub_1 = barrel_fm[k][barrel_read_index[k]];
         const auto &barrel_id_1 = barrel_stub_1.id();
         barrel_valid[j] = (barrel_valid[j] && barrel_id_0 <= barrel_id_1);
       }
       // Compare the given barrel and disk IDs against each disk ID.
-      barrel_disk_id_comp : for (unsigned short k = 0; k < NFMDisk; k++) {
+      barrel_disk_id_comp : for (short k = 0; k < NFMDisk; k++) {
         const auto &disk_stub_1 = disk_fm[k][disk_read_index[k]];
         const auto &disk_id_1 = disk_stub_1.id();
         barrel_valid[j] = (barrel_valid[j] && barrel_id_0 <= disk_id_1);
@@ -137,7 +199,7 @@ void TrackBuilder(
       min_id = (barrel_valid[j] ? barrel_id_0 : min_id);
     }
 
-    disk_min_id : for (unsigned short j = 0; j < NFMDisk; j++) {
+    disk_min_id : for (short j = 0; j < NFMDisk; j++) {
 
       const auto &disk_stub_0 = disk_fm[j][disk_read_index[j]];
       const auto &disk_id_0 = disk_stub_0.id();
@@ -145,13 +207,13 @@ void TrackBuilder(
       disk_valid[j] = (!empty && disk_id_0 != kInvalidTrackletID);
 
       // Compare the given barrel and disk IDs against each barrel ID.
-      disk_barrel_id_comp : for (unsigned short k = 0; k < NFMBarrel; k++) {
+      disk_barrel_id_comp : for (short k = 0; k < NFMBarrel; k++) {
         const auto &barrel_stub_1 = barrel_fm[k][barrel_read_index[k]];
         const auto &barrel_id_1 = barrel_stub_1.id();
         disk_valid[j] = (disk_valid[j] && disk_id_0 <= barrel_id_1);
       }
       // Compare the given barrel and disk IDs against each disk ID.
-      disk_disk_id_comp : for (unsigned short k = 0; k < NFMDisk; k++) {
+      disk_disk_id_comp : for (short k = 0; k < NFMDisk; k++) {
         const auto &disk_stub_1 = disk_fm[k][disk_read_index[k]];
         const auto &disk_id_1 = disk_stub_1.id();
         disk_valid[j] = (disk_valid[j] && disk_id_0 <= disk_id_1);
@@ -175,73 +237,10 @@ void TrackBuilder(
     // tracklet ID and assign it to the appropriate field of the TrackFit
     // object.
     ap_uint<3> nMatches = 0; // there can be up to eight matches (3 bits)
-    barrel_stub_association : for (unsigned short j = 0; j < NBarrelStubs; j++) {
-
-      ap_uint<1> barrel_stub_valid = false;
-      barrel_stub_valid : for (unsigned short k = 0; k < NFMPerLayer; k++)
-        barrel_stub_valid = (barrel_stub_valid || barrel_valid[j * NFMPerLayer + k]);
-      nMatches += (barrel_stub_valid ? 1 : 0);
-
-      static_assert(NFMPerLayer <= 4, "Number of FM memories per layer cannot exceed four.");
-      const auto &barrel_stub = ((NFMPerLayer > 3 && barrel_valid[j * NFMPerLayer + 3]) ? barrelFullMatches[j * NFMPerLayer + 3].read_mem(bx, barrel_index[j * NFMPerLayer + 3]) :
-                                ((NFMPerLayer > 2 && barrel_valid[j * NFMPerLayer + 2]) ? barrelFullMatches[j * NFMPerLayer + 2].read_mem(bx, barrel_index[j * NFMPerLayer + 2]) :
-                                ((NFMPerLayer > 1 && barrel_valid[j * NFMPerLayer + 1]) ? barrelFullMatches[j * NFMPerLayer + 1].read_mem(bx, barrel_index[j * NFMPerLayer + 1]) :
-                                                                                          barrelFullMatches[j * NFMPerLayer].read_mem(bx, barrel_index[j * NFMPerLayer]))));
-
-      const auto &barrel_stub_index = (barrel_stub_valid ? barrel_stub.getStubIndex() : FullMatch<BARREL>::FMSTUBINDEX(0));
-      const auto &barrel_stub_r = (barrel_stub_valid ? barrel_stub.getStubR() : FullMatch<BARREL>::FMSTUBR(0));
-      const auto &barrel_phi_res = (barrel_stub_valid ? barrel_stub.getPhiRes() : FullMatch<BARREL>::FMPHIRES(0));
-      const auto &barrel_z_res = (barrel_stub_valid ? barrel_stub.getZRes() : FullMatch<BARREL>::FMZRES(0));
-
-      switch (j) {
-        case 0:
-          track.template setBarrelStub<0>(barrel_stub_valid, barrel_stub_index, barrel_stub_r, barrel_phi_res, barrel_z_res);
-          break;
-        case 1:
-          track.template setBarrelStub<1>(barrel_stub_valid, barrel_stub_index, barrel_stub_r, barrel_phi_res, barrel_z_res);
-          break;
-        case 2:
-          track.template setBarrelStub<2>(barrel_stub_valid, barrel_stub_index, barrel_stub_r, barrel_phi_res, barrel_z_res);
-          break;
-        case 3:
-          track.template setBarrelStub<3>(barrel_stub_valid, barrel_stub_index, barrel_stub_r, barrel_phi_res, barrel_z_res);
-          break;
-      }
-    }
-
-    disk_stub_association : for (unsigned short j = 0; j < 4; j++) {
-
-      ap_uint<1> disk_stub_valid = false;
-      disk_stub_valid : for (unsigned short k = 0; k < NFMPerDisk; k++)
-        disk_stub_valid = (disk_stub_valid || disk_valid[j * NFMPerDisk + k]);
-      nMatches += (disk_stub_valid ? 1 : 0);
-
-      static_assert(NFMPerDisk <= 4, "Number of FM memories per disk cannot exceed four.");
-      const auto &disk_stub = ((NFMPerDisk > 3 && disk_valid[j * NFMPerDisk + 3]) ? diskFullMatches[j * NFMPerDisk + 3].read_mem(bx, disk_index[j * NFMPerDisk + 3]) :
-                              ((NFMPerDisk > 2 && disk_valid[j * NFMPerDisk + 2]) ? diskFullMatches[j * NFMPerDisk + 2].read_mem(bx, disk_index[j * NFMPerDisk + 2]) :
-                              ((NFMPerDisk > 1 && disk_valid[j * NFMPerDisk + 1]) ? diskFullMatches[j * NFMPerDisk + 1].read_mem(bx, disk_index[j * NFMPerDisk + 1]) :
-                                                                                    diskFullMatches[j * NFMPerDisk].read_mem(bx, disk_index[j * NFMPerDisk]))));
-
-      const auto &disk_stub_index = (disk_stub_valid ? disk_stub.getStubIndex() : FullMatch<DISK>::FMSTUBINDEX(0));
-      const auto &disk_stub_r = (disk_stub_valid ? disk_stub.getStubR() : FullMatch<DISK>::FMSTUBR(0));
-      const auto &disk_phi_res = (disk_stub_valid ? disk_stub.getPhiRes() : FullMatch<DISK>::FMPHIRES(0));
-      const auto &disk_z_res = (disk_stub_valid ? disk_stub.getZRes() : FullMatch<DISK>::FMZRES(0));
-
-      switch (j) {
-        case 0:
-          track.template setDiskStub<4>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
-          break;
-        case 1:
-          track.template setDiskStub<5>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
-          break;
-        case 2:
-          track.template setDiskStub<6>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
-          break;
-        case 3:
-          track.template setDiskStub<7>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
-          break;
-      }
-    }
+    if (NBarrelStubs > 0)
+      addStubs<BARREL, 0, NBarrelStubs, NDiskStubs, NFMPerLayer, NFMPerDisk>(barrel_valid, nMatches, barrelFullMatches, bx, barrel_index, track);
+    if (NDiskStubs > 0)
+      addStubs<DISK, 0, NBarrelStubs, NDiskStubs, NFMPerLayer, NFMPerDisk>(disk_valid, nMatches, diskFullMatches, bx, disk_index, track);
 
     // Only tracks with at least two matches are valid.
     track.setTrackValid(nMatches >= kMinNMatches);
@@ -250,7 +249,7 @@ void TrackBuilder(
     // object that was constructed.
     if (track.getTrackValid()) {
       trackWord[nTracks] = track.getTrackWord();
-      barrel_stub_words: for (unsigned j = 0 ; j < NBarrelStubs; j++) {
+      barrel_stub_words: for (short j = 0 ; j < NBarrelStubs; j++) {
         switch (j) {
           case 0:
             barrelStubWords[j][nTracks] = track.template getStubValid<0>() ? track.template getBarrelStubWord<0>() : typename TrackFit<NBarrelStubs, NDiskStubs>::BarrelStubWord(0);
@@ -266,7 +265,7 @@ void TrackBuilder(
             break;
         }
       }
-      disk_stub_words: for (unsigned j = 0 ; j < NDiskStubs; j++) {
+      disk_stub_words: for (short j = 0 ; j < NDiskStubs; j++) {
         switch (j) {
           case 0:
             diskStubWords[j][nTracks] = track.template getStubValid<4>() ? track.template getDiskStubWord<4>() : typename TrackFit<NBarrelStubs, NDiskStubs>::DiskStubWord(0);
@@ -287,7 +286,7 @@ void TrackBuilder(
 
     // Update the circular buffer indices and read a new element from each of
     // the input full-match memories.
-    barrel_circular_buffer_update : for (unsigned short j = 0; j < NFMBarrel; j++) {
+    barrel_circular_buffer_update : for (short j = 0; j < NFMBarrel; j++) {
       barrel_read_index[j] += (barrel_valid[j] ? 1 : 0);
       const ap_uint<kNBitsTBBuffer> barrel_next_write_index = barrel_write_index[j] + 1;
       const ap_uint<1> barrel_not_full = (barrel_next_write_index != barrel_read_index[j]);
@@ -296,7 +295,7 @@ void TrackBuilder(
       barrel_write_index[j] += ((empty || barrel_not_full) ? 1 : 0);
     }
 
-    disk_circular_buffer_update : for (unsigned short j = 0; j < NFMDisk; j++) {
+    disk_circular_buffer_update : for (short j = 0; j < NFMDisk; j++) {
       disk_read_index[j] += (disk_valid[j] ? 1 : 0);
       const ap_uint<kNBitsTBBuffer> disk_next_write_index = disk_write_index[j] + 1;
       const ap_uint<1> disk_not_full = (disk_next_write_index != disk_read_index[j]);
