@@ -44,49 +44,49 @@ template<int NBarrelStubs, int NDiskStubs>
 class TrackFitBits : public TrackFitBase<NBarrelStubs, NDiskStubs>
 {
 public:
-  static constexpr unsigned kTFStubRZResidLSB(const unsigned i) {
+  static constexpr unsigned kTFStubRZResidLSB(const int i) {
     return (i >= NBarrelStubs ? ((TrackFitBase<NBarrelStubs, NDiskStubs>::kNStubs - i - 1) * TrackFitBase<NBarrelStubs, NDiskStubs>::kDiskStubSize) :
            (NDiskStubs * TrackFitBase<NBarrelStubs, NDiskStubs>::kDiskStubSize + (NBarrelStubs - i - 1) * TrackFitBase<NBarrelStubs, NDiskStubs>::kBarrelStubSize));
   }
-  static constexpr unsigned kTFStubRZResidMSB(const unsigned i) {
+  static constexpr unsigned kTFStubRZResidMSB(const int i) {
     return (i >= NBarrelStubs ? (kTFStubRZResidLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFRResidSize - 1) :
            (kTFStubRZResidLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFZResidSize - 1));
   }
-  static constexpr unsigned kTFStubPhiResidLSB(const unsigned i) {
+  static constexpr unsigned kTFStubPhiResidLSB(const int i) {
     return kTFStubRZResidMSB(i) + 1;
   }
-  static constexpr unsigned kTFStubPhiResidMSB(const unsigned i) {
+  static constexpr unsigned kTFStubPhiResidMSB(const int i) {
     return kTFStubPhiResidLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFPhiResidSize - 1;
   }
-  static constexpr unsigned kTFStubRLSB(const unsigned i) {
+  static constexpr unsigned kTFStubRLSB(const int i) {
     return kTFStubPhiResidMSB(i) + 1;
   }
-  static constexpr unsigned kTFStubRMSB(const unsigned i) {
+  static constexpr unsigned kTFStubRMSB(const int i) {
     return (i >= NBarrelStubs ? (kTFStubRLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFDiskStubRSize - 1) :
            (kTFStubRLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFBarrelStubRSize - 1));
   }
-  static constexpr unsigned kTFStubIndexLSB(const unsigned i) {
+  static constexpr unsigned kTFStubIndexLSB(const int i) {
     return kTFStubRMSB(i) + 1;
   }
-  static constexpr unsigned kTFStubIndexMSB(const unsigned i) {
+  static constexpr unsigned kTFStubIndexMSB(const int i) {
     return (kTFStubIndexLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFStubIndexSize - 1);
   }
-  static constexpr unsigned kTFTrackIndexLSB(const unsigned i) {
+  static constexpr unsigned kTFTrackIndexLSB(const int i) {
     return kTFStubIndexMSB(i) + 1;
   }
-  static constexpr unsigned kTFTrackIndexMSB(const unsigned i) {
+  static constexpr unsigned kTFTrackIndexMSB(const int i) {
     return (kTFTrackIndexLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFTrackIndexSize - 1);
   }
-  static constexpr unsigned kTFStubValidLSB(const unsigned i) {
+  static constexpr unsigned kTFStubValidLSB(const int i) {
     return kTFTrackIndexMSB(i) + 1;
   }
-  static constexpr unsigned kTFStubValidMSB(const unsigned i) {
+  static constexpr unsigned kTFStubValidMSB(const int i) {
     return (kTFStubValidLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFValidSize - 1);
   }
-  static constexpr unsigned kTFHitCountLSB(const unsigned i) {
+  static constexpr unsigned kTFHitCountLSB(const int i) {
     return (kTFStubValidMSB(0) + (TrackFitBase<NBarrelStubs, NDiskStubs>::kNStubs - i - 1) * TrackFitBase<NBarrelStubs, NDiskStubs>::kTFHitCountSize + 1);
   }
-  static constexpr unsigned kTFHitCountMSB(const unsigned i) {
+  static constexpr unsigned kTFHitCountMSB(const int i) {
     return (kTFHitCountLSB(i) + TrackFitBase<NBarrelStubs, NDiskStubs>::kTFHitCountSize - 1);
   }
 };

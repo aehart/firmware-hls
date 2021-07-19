@@ -184,11 +184,15 @@ void TrackBuilder(
       nMatches += (barrel_stub_valid ? 1 : 0);
 
       // The following code is currently specific to L1L2 with four FullMatch memories per layer.
-      static_assert(NFMPerLayer <= 4, "Number of FM memories per layer cannot exceed four.");
-      const auto &barrel_stub = ((NFMPerLayer > 3 && barrel_valid[j * NFMPerLayer + 3]) ? barrelFullMatches[j * NFMPerLayer + 3].read_mem(bx, barrel_index[j * NFMPerLayer + 3]) :
+      static_assert(NFMPerLayer <= 8, "Number of FM memories per layer cannot exceed eight.");
+      const auto &barrel_stub = ((NFMPerLayer > 7 && barrel_valid[j * NFMPerLayer + 7]) ? barrelFullMatches[j * NFMPerLayer + 7].read_mem(bx, barrel_index[j * NFMPerLayer + 7]) :
+                                ((NFMPerLayer > 6 && barrel_valid[j * NFMPerLayer + 6]) ? barrelFullMatches[j * NFMPerLayer + 6].read_mem(bx, barrel_index[j * NFMPerLayer + 6]) :
+                                ((NFMPerLayer > 5 && barrel_valid[j * NFMPerLayer + 5]) ? barrelFullMatches[j * NFMPerLayer + 5].read_mem(bx, barrel_index[j * NFMPerLayer + 5]) :
+                                ((NFMPerLayer > 4 && barrel_valid[j * NFMPerLayer + 4]) ? barrelFullMatches[j * NFMPerLayer + 4].read_mem(bx, barrel_index[j * NFMPerLayer + 4]) :
+                                ((NFMPerLayer > 3 && barrel_valid[j * NFMPerLayer + 3]) ? barrelFullMatches[j * NFMPerLayer + 3].read_mem(bx, barrel_index[j * NFMPerLayer + 3]) :
                                 ((NFMPerLayer > 2 && barrel_valid[j * NFMPerLayer + 2]) ? barrelFullMatches[j * NFMPerLayer + 2].read_mem(bx, barrel_index[j * NFMPerLayer + 2]) :
                                 ((NFMPerLayer > 1 && barrel_valid[j * NFMPerLayer + 1]) ? barrelFullMatches[j * NFMPerLayer + 1].read_mem(bx, barrel_index[j * NFMPerLayer + 1]) :
-                                                                                          barrelFullMatches[j * NFMPerLayer].read_mem(bx, barrel_index[j * NFMPerLayer]))));
+                                                                                          barrelFullMatches[j * NFMPerLayer].read_mem(bx, barrel_index[j * NFMPerLayer]))))))));
 
       const auto &barrel_stub_index = (barrel_stub_valid ? barrel_stub.getStubIndex() : FullMatch<BARREL>::FMSTUBINDEX(0));
       const auto &barrel_stub_r = (barrel_stub_valid ? barrel_stub.getStubR() : FullMatch<BARREL>::FMSTUBR(0));
@@ -208,6 +212,18 @@ void TrackBuilder(
         case 3:
           track.template setBarrelStub<3>(barrel_stub_valid, barrel_stub_index, barrel_stub_r, barrel_phi_res, barrel_z_res);
           break;
+        case 4:
+          track.template setBarrelStub<4>(barrel_stub_valid, barrel_stub_index, barrel_stub_r, barrel_phi_res, barrel_z_res);
+          break;
+        case 5:
+          track.template setBarrelStub<5>(barrel_stub_valid, barrel_stub_index, barrel_stub_r, barrel_phi_res, barrel_z_res);
+          break;
+        case 6:
+          track.template setBarrelStub<6>(barrel_stub_valid, barrel_stub_index, barrel_stub_r, barrel_phi_res, barrel_z_res);
+          break;
+        case 7:
+          track.template setBarrelStub<7>(barrel_stub_valid, barrel_stub_index, barrel_stub_r, barrel_phi_res, barrel_z_res);
+          break;
       }
     }
 
@@ -219,11 +235,15 @@ void TrackBuilder(
       nMatches += (disk_stub_valid ? 1 : 0);
 
       // The following code is currently specific to L1L2 with four FullMatch memories per disk.
-      static_assert(NFMPerDisk <= 4, "Number of FM memories per disk cannot exceed four.");
-      const auto &disk_stub = ((NFMPerDisk > 3 && disk_valid[j * NFMPerDisk + 3]) ? diskFullMatches[j * NFMPerDisk + 3].read_mem(bx, disk_index[j * NFMPerDisk + 3]) :
+      static_assert(NFMPerDisk <= 6, "Number of FM memories per disk cannot exceed six.");
+      const auto &disk_stub = ((NFMPerDisk > 7 && disk_valid[j * NFMPerDisk + 7]) ? diskFullMatches[j * NFMPerDisk + 7].read_mem(bx, disk_index[j * NFMPerDisk + 7]) :
+                              ((NFMPerDisk > 6 && disk_valid[j * NFMPerDisk + 6]) ? diskFullMatches[j * NFMPerDisk + 6].read_mem(bx, disk_index[j * NFMPerDisk + 6]) :
+                              ((NFMPerDisk > 5 && disk_valid[j * NFMPerDisk + 5]) ? diskFullMatches[j * NFMPerDisk + 5].read_mem(bx, disk_index[j * NFMPerDisk + 5]) :
+                              ((NFMPerDisk > 4 && disk_valid[j * NFMPerDisk + 4]) ? diskFullMatches[j * NFMPerDisk + 4].read_mem(bx, disk_index[j * NFMPerDisk + 4]) :
+                              ((NFMPerDisk > 3 && disk_valid[j * NFMPerDisk + 3]) ? diskFullMatches[j * NFMPerDisk + 3].read_mem(bx, disk_index[j * NFMPerDisk + 3]) :
                               ((NFMPerDisk > 2 && disk_valid[j * NFMPerDisk + 2]) ? diskFullMatches[j * NFMPerDisk + 2].read_mem(bx, disk_index[j * NFMPerDisk + 2]) :
                               ((NFMPerDisk > 1 && disk_valid[j * NFMPerDisk + 1]) ? diskFullMatches[j * NFMPerDisk + 1].read_mem(bx, disk_index[j * NFMPerDisk + 1]) :
-                                                                                    diskFullMatches[j * NFMPerDisk].read_mem(bx, disk_index[j * NFMPerDisk]))));
+                                                                                    diskFullMatches[j * NFMPerDisk].read_mem(bx, disk_index[j * NFMPerDisk]))))))));
 
       const auto &disk_stub_index = (disk_stub_valid ? disk_stub.getStubIndex() : FullMatch<DISK>::FMSTUBINDEX(0));
       const auto &disk_stub_r = (disk_stub_valid ? disk_stub.getStubR() : FullMatch<DISK>::FMSTUBR(0));
@@ -232,16 +252,28 @@ void TrackBuilder(
 
       switch (j) {
         case 0:
-          track.template setDiskStub<4>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
+          track.template setDiskStub<NBarrelStubs>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
           break;
         case 1:
-          track.template setDiskStub<5>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
+          track.template setDiskStub<NBarrelStubs + 1>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
           break;
         case 2:
-          track.template setDiskStub<6>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
+          track.template setDiskStub<NBarrelStubs + 2>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
           break;
         case 3:
-          track.template setDiskStub<7>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
+          track.template setDiskStub<NBarrelStubs + 3>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
+          break;
+        case 4:
+          track.template setDiskStub<NBarrelStubs + 4>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
+          break;
+        case 5:
+          track.template setDiskStub<NBarrelStubs + 5>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
+          break;
+        case 6:
+          track.template setDiskStub<NBarrelStubs + 6>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
+          break;
+        case 7:
+          track.template setDiskStub<NBarrelStubs + 7>(disk_stub_valid, disk_stub_index, disk_stub_r, disk_phi_res, disk_z_res);
           break;
       }
     }
