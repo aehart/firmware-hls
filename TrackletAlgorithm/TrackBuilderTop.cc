@@ -1,16 +1,5 @@
 #include "TrackBuilderTop.h"
 
-////////////////////////////////////////////////////////////////////////////////
-// Top functions for various TrackBuilders (TC). For each iteration of
-// the main processing loop, a TC retrieves a pair of stub indices from one of
-// the stub-pair memories, and in turn, these indices are used to retrieve one
-// stub each from an inner and an outer all-stub memory. This pair of stubs is
-// used to calculate a rough set of helix parameters, which are written to the
-// tracklet-parameter memory if the tracklet passes cuts on rinv and z0. Rough
-// projections to additional layers and disks are also calculated and are
-// written to the appropriate tracklet-projection memories.
-////////////////////////////////////////////////////////////////////////////////
-
 void TrackBuilder_D1D2(
     const BXType bx,
     const TrackletParameterMemory trackletParameters[4],
