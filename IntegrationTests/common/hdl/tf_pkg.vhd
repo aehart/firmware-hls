@@ -117,6 +117,12 @@ package tf_pkg is
   -- ########################### Functions ################################################################
   function clogb2     (bit_depth : integer) return integer;
 
+  function incr ( s: std_logic_vector ) return std_logic_vector;
+
+  function uint ( s: std_logic_vector ) return integer;
+
+  function resize ( s: std_logic_vector; n: natural ) return std_logic_vector;
+
   function to_bstring(sl : std_logic) return string;
 
   function to_bstring(slv : std_logic_vector) return string;
@@ -189,6 +195,21 @@ package body tf_pkg is
   begin
     return integer( ceil( log2( real( bit_depth ) ) ) );
   end;
+
+  function incr ( s: std_logic_vector ) return std_logic_vector is
+  begin
+    return std_logic_vector( unsigned( s ) + 1 );
+  end function;
+
+  function uint ( s: std_logic_vector ) return integer is
+  begin
+    return to_integer( unsigned( s ) );
+  end function;
+
+  function resize ( s: std_logic_vector; n: natural ) return std_logic_vector is
+  begin
+    return std_logic_vector( resize( signed( s ), n ) );
+  end function;
 
   function to_bstring(sl : std_logic) return string is
   variable sl_str_v : string(1 to 3);  -- std_logic image with quotes around
