@@ -25,7 +25,7 @@ entity tf_pipe_delay is
     wea: in std_logic;
     addra: in std_logic_vector( clogb2(RAM_DEPTH) - 1 downto 0 );
     dina: in std_logic_vector( RAM_WIDTH - 1 downto 0 );
-    bxa_out: in std_logic_vector( 2 downto 0 );
+    bxa_out: out std_logic_vector( 2 downto 0 );
     wea_out: out std_logic;
     addra_out: out std_logic_vector( clogb2(RAM_DEPTH) - 1 downto 0 );
     dina_out: out std_logic_vector( RAM_WIDTH - 1 downto 0 )
