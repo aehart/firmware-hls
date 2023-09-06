@@ -9,9 +9,9 @@ luts_url="https://cernbox.cern.ch/remote.php/dav/public-files/HMDbKJET05fkvT1/LU
 memprints_url_reduced="https://cernbox.cern.ch/remote.php/dav/public-files/4jZdhxfj02Ie21I/MemPrints.tar.gz"
 luts_url_reduced="https://cernbox.cern.ch/remote.php/dav/public-files/mcGz25JNu19Oqzm/LUTs.tar.gz"
 # Combined modules
-# Updated files from Jason for TP disk with extra sign bit for disks in AllInnerStubs memories. This is in cmssw PR #230
-memprints_url_cm="https://aryd.web.cern.ch/aryd/MemPrintsCM_230822.tgz"
-luts_url_cm="https://cernbox.cern.ch/remote.php/dav/public-files/uoKcrxMXtjVHagL/LUTs.tar.gz"
+# Updated files from Jason for TP disk with extra sign bit for disks in AllInnerStubs memories. This is in cmssw PR #230 updated to 13_3_0_pre1
+memprints_url_cm="https://aryd.web.cern.ch/aryd/MemPrints_Combined_230824B.tgz"
+luts_url_cm="https://aryd.web.cern.ch/aryd/LUTs_Combined_230824B.tgz"
 # Reduced Combined modules
 memprints_url_reducedcm="https://cernbox.cern.ch/remote.php/dav/public-files/g0EIkgWgie5mBob/MemPrints.tar.gz"
 luts_url_reducedcm="https://cernbox.cern.ch/remote.php/dav/public-files/HT8q7fk4UvhpdPK/LUTs.tar.gz"
