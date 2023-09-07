@@ -315,6 +315,7 @@ for module in ${processing_modules[@]}
 do
   echo ${module}
   memprint_location="MemPrints"
+  memprint_location_combined="MemPrintsCM"
   memprint_location_reduced="MemPrintsReduced"
   memprint_location_reducedcm="MemPrintsReducedCM"
   memprint_location_reducedcm2="MemPrintsReducedCM2"
@@ -322,7 +323,6 @@ do
   table_location="LUTs"
   if [[ ${module_type} == "TP" || ${module_type} == "MP" || ${module_type} == "VMRCM" ]]
   then
-    memprint_location="MemPrintsCM"
     table_location="LUTsCM"
     if [[ ${module_type} == "VMRCM" ]]
     then
@@ -337,6 +337,7 @@ do
     target_dir=${module_type}/${module}
 
     rm -rf ${target_dir}
+    mkdir -p ${target_dir}/CombinedConfig
     mkdir -p ${target_dir}/ReducedConfig
     mkdir -p ${target_dir}/BarrelConfig
     mkdir -p ${target_dir}/ReducedCombinedConfig
@@ -344,7 +345,11 @@ do
 
     for mem in `grep "${module}\." ${wires} | awk '{print $1}' | sort -u`;
     do
-      find ${memprint_location} -type f -regex ".*_${mem}_04\.dat$" -exec ln -s ../../{} ${target_dir}/ \;
+      if [[ ${module_type} != "TP" && ${module_type} != "MP" && ${module_type} != "VMRCM" ]]
+      then
+        find ${memprint_location} -type f -regex ".*_${mem}_04\.dat$" -exec ln -s ../../{} ${target_dir}/ \;
+      fi
+      find ${memprint_location_combined} -type f -regex ".*_${mem}_04\.dat$" -exec ln -s ../../../{} ${target_dir}/CombinedConfig/ \;
       find ${memprint_location_reduced} -type f -regex ".*_${mem}_04\.dat$" -exec ln -s ../../../{} ${target_dir}/ReducedConfig/ \;
       find ${memprint_location_reducedcm} -type f -regex ".*_${mem}_04\.dat$" -exec ln -s ../../../{} ${target_dir}/ReducedCombinedConfig/ \;
       find ${memprint_location_reducedcm2} -type f -regex ".*_${mem}_04\.dat$" -exec ln -s ../../../{} ${target_dir}/ReducedCombinedConfig2/ \;

@@ -32,7 +32,7 @@ int main() {
 
   constexpr char phi = 'A' + phiRegion; // Converts phiRegion to char
   const string vmrID = ((kLAYER) ? "L" + to_string(kLAYER) : "D" + to_string(kDISK)) + "PHI" + phi;
-  TBHelper tb("VMRCM/VMR_" + vmrID);
+  TBHelper tb("VMRCM/VMR_" + vmrID + "/CombinedConfig);
 
   // String patterns of the memory file names
   const string inputPattern = (kLAYER) ? "InputStubs*" : "InputStubs*PS*";

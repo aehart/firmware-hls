@@ -98,7 +98,7 @@ int main()
 #endif
 std::cout<<module_name[MODULE_];
 //
-  TBHelper tb(std::string("TP/") + module_name[MODULE_]);
+  TBHelper tb(std::string("TP/") + module_name[MODULE_] + "/CombinedConfig");
   // error counts
 
   int err = 0;

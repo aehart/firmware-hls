@@ -36,7 +36,7 @@ int main()
   const auto vmStubMemRZ  = (MODULE_ > MP_D5PHID_) ? kNbitsrzbinMPBarrel : kNbitsrzbinMPDisk;
   const auto tprojMemType  = (MODULE_ >= MP_L1PHIA_ && MODULE_ <= MP_L3PHID_) ? BARRELPS : (MODULE_ > MP_D5PHID_) ? BARREL2S : DISK;
   const auto fmProjMemType = (MODULE_ >= MP_L1PHIA_ && MODULE_) ? BARREL : DISK;
-  TBHelper tb(std::string("MP/") + module_name[MODULE_]);
+  TBHelper tb(std::string("MP/") + module_name[MODULE_] + "/CombinedConfig");
 
   // error counts
   int err = 0;
