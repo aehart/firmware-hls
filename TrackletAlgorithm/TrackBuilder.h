@@ -4,6 +4,7 @@
 #include "TrackletParameterMemory.h"
 #include "FullMatchMemory.h"
 #include "TrackFitMemory.h"
+#include <bitset>
 
 static const unsigned short kNBitsTBBuffer = 1;
 static const unsigned short kMinNMatches = 2;
@@ -297,6 +298,7 @@ void TrackBuilder(
     // Output the track word and eight stub words associated with the TrackFit
     // object that was constructed.
     if (track.getTrackValid()) {
+      std::cout << "  " << nTracks << " TCID: " << std::bitset<7>(TCID) << std::endl;
       trackWord[nTracks] = track.getTrackWord();
       barrel_stub_words: for (short j = 0 ; j < NBarrelStubs; j++) {
         switch (j) {

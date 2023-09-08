@@ -43,7 +43,7 @@ typedef TrackFitMemory<kNBarrelStubs, kNDiskStubs> TrackFitMemory_t;
 constexpr int InputBase = 16;
 // Base used for output of comparison results
 //   (only base 2 and base 16 are supported)
-constexpr int OutputBase = 16;
+constexpr int OutputBase = 2;
 
 template<int I>
 void setBarrelStubs(TrackFit_t &track, const TrackFit_t::BarrelStubWord stubWords[][kMaxProc], const unsigned i) {
@@ -169,7 +169,7 @@ int main()
     const auto &pos = fout_tracks.at(0).tellg();
 
     // compare the computed outputs with the expected ones
-    err += compareMemWithFile<TrackFitMemory_t,InputBase,OutputBase,TrackFit_t::kTFHitMapLSB,TrackFit_t::kTFTrackValidMSB>(tracksMem, fout_tracks.at(0), ievt, "\nTrack word", true);
+    err += compareMemWithFile<TrackFitMemory_t,InputBase,OutputBase,TrackFit_t::kTFStubIndexOuterLSB,TrackFit_t::kTFTrackValidMSB>(tracksMem, fout_tracks.at(0), ievt, "\nTrack word", true);
     compareStubsWithFile<kNBarrelStubs + kNDiskStubs - 1>(err, fout_tracks.at(0), pos, tracksMem, ievt);
     cout << endl;
 
