@@ -40,12 +40,10 @@ entity tf_mem_bin is
     NAME            : string := "MEMNAME"          --! Memory name
     );
   port (
-    clka      : in  std_logic;                                      --! Write clock
-    clkb      : in  std_logic;                                      --! Read clock
+    clk       : in  std_logic;                                      --! Clock
     wea       : in  std_logic;                                      --! Write enable
     enb       : in  std_logic;                                      --! Read Enable, for additional power savings, disable when not in use
     rstb      : in  std_logic;                                      --! Output reset (does not affect memory contents)
-    regceb    : in  std_logic;                                      --! Output register enable
     addra     : in  std_logic_vector(clogb2(RAM_DEPTH)-1 downto 0); --! Write address bus, width determined from RAM_DEPTH
     dina      : in  std_logic_vector(RAM_WIDTH-1 downto 0);         --! RAM input data
     addrb     : in  std_logic_vector(clogb2(RAM_DEPTH)-1 downto 0); --! Read address bus, width determined from RAM_DEPTH
@@ -110,7 +108,7 @@ begin
 assert (RAM_DEPTH  = NUM_PAGES*PAGE_LENGTH) report "User changed RAM_DEPTH" severity FAILURE;
 assert (NUM_ENTRIES_PER_MEM_BINS = PAGE_LENGTH/NUM_MEM_BINS) report "User changed NUM_ENTRIES_PER_MEM_BINS" severity FAILURE;
 
-process(clka)
+process(clk)
   variable vi_clk_cnt   : integer := -1; -- Clock counter
   variable vi_page_cnt  : integer := 0;  -- Page counter
   variable vi_nent_idx  : integer := 0;  -- Bin index of nent
@@ -119,7 +117,7 @@ process(clka)
   variable written      : integer := 0;
   --variable v_line_out   : line;          -- Line for debug
 begin
-  if rising_edge(clka) then
+  if rising_edge(clk) then
     if (sync_nent='1') and vi_clk_cnt=-1 then
       vi_clk_cnt := 0;
     end if;
@@ -156,9 +154,9 @@ begin
   end if;
 end process;
 
-process(clkb)
+process(clk)
 begin
-  if rising_edge(clkb) then
+  if rising_edge(clk) then
     if (enb='1') then
       sv_RAM_row <= sa_RAM_data(to_integer(unsigned(addrb)));
     end if;
@@ -169,12 +167,12 @@ end process;
 MODE : if (RAM_PERFORMANCE = "LOW_LATENCY") generate -- no_output_register; 1 clock cycle read latency at the cost of a longer clock-to-out timing
   doutb <= sv_RAM_row;
 else generate -- output_register; 2 clock cycle read latency with improve clock-to-out timing
-  process(clkb)
+  process(clk)
   begin
-    if rising_edge(clkb) then
+    if rising_edge(clk) then
       if (rstb='1') then
         doutb <= (others => '0');
-      elsif (regceb='1') then
+      else
         doutb <= sv_RAM_row;
       end if;
     end if;

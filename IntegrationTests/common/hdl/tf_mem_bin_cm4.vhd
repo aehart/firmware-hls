@@ -43,15 +43,13 @@ entity tf_mem_bin_cm4 is
     NAME            : string := "MEMNAME"          --! Memory name
     );
   port (
-    clka      : in  std_logic;                                      --! Write clock
-    clkb      : in  std_logic;                                      --! Read clock
+    clk       : in  std_logic;                                      --! Clock
     wea       : in  std_logic;                                      --! Write enable
     enb0       : in  std_logic;                                      --! Read Enable, for additional power savings, disable when not in use
     enb1       : in  std_logic;                                      --! Read Enable, for additional power savings, disable when not in use
     enb2       : in  std_logic;                                      --! Read Enable, for additional power savings, disable when not in use
     enb3       : in  std_logic;                                      --! Read Enable, for additional power savings, disable when not in use
     rstb      : in  std_logic;                                      --! Output reset (does not affect memory contents)
-    regceb    : in  std_logic;                                      --! Output register enable
     addra  : in  std_logic_vector(clogb2(RAM_DEPTH)-1 downto 0); --! Write addres
     dina      : in  std_logic_vector(RAM_WIDTH-1 downto 0);         --! RAM input data
     addrb0     : in  std_logic_vector(clogb2(RAM_DEPTH)-1 downto 0); --! Read address bus, width determined from RAM_DEPTH
@@ -145,7 +143,7 @@ begin
 assert (RAM_DEPTH  = NUM_PAGES*PAGE_LENGTH_CM) report "User changed RAM_DEPTH" severity FAILURE;
 assert (NUM_ENTRIES_PER_MEM_BINS = PAGE_LENGTH_CM/NUM_MEM_BINS) report "tf_mem_bin_cm4: User changed NUM_ENTRIES_PER_MEM_BINS" severity FAILURE;
 
-process(clka)
+process(clk)
   variable vi_clk_cnt   : integer := -1; -- Clock counter
   variable vi_page_cnt  : integer := 0;  -- Page counter
   variable vi_nent_idx  : std_logic_vector(5 downto 0);  -- Bin index of nent
@@ -156,7 +154,7 @@ process(clka)
   variable upperbits, lowerbits : std_logic_vector(2 downto 0);
   --variable v_line_out   : line;          -- Line for debug
 begin
-  if rising_edge(clka) then
+  if rising_edge(clk) then
     report "tm_mem_bin_cm4 vi_clk_cnt "&integer'image(vi_clk_cnt);
     if (sync_nent='1') and vi_clk_cnt=-1 then
       vi_clk_cnt := 0;
@@ -199,9 +197,9 @@ begin
   end if;
 end process;
 
-process(clkb)
+process(clk)
 begin
-  if rising_edge(clkb) then
+  if rising_edge(clk) then
     if (enb0='1') then
       sv_RAM_row0 <= sa_RAM_data0(to_integer(unsigned(addrb0)));
     end if;
@@ -234,15 +232,15 @@ MODE : if (RAM_PERFORMANCE = "LOW_LATENCY") generate -- no_output_register; 1 cl
   doutb2 <= sv_RAM_row2;
   doutb3 <= sv_RAM_row3;
 else generate -- output_register; 2 clock cycle read latency with improve clock-to-out timing
-  process(clkb)
+  process(clk)
   begin
-    if rising_edge(clkb) then
+    if rising_edge(clk) then
       if (rstb='1') then
         doutb0 <= (others => '0');
         doutb1 <= (others => '0');
         doutb2 <= (others => '0');
         doutb3 <= (others => '0');
-      elsif (regceb='1') then
+      else
         doutb0 <= sv_RAM_row0;
         doutb1 <= sv_RAM_row1;
         doutb2 <= sv_RAM_row2;
