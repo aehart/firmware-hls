@@ -37,10 +37,6 @@ end tf_pipe_delay;
 
 
 architecture behavior of tf_pipe_delay is
-  attribute KEEP_HIERARCHY : string;
-  attribute KEEP_HIERARCHY of tf_pipe_delay: entity is "TRUE";
-  attribute DONT_TOUCH : string;
-  attribute DONT_TOUCH of tf_pipe_delay: entity is "TRUE";
 
   type t_wea_pipe is array (0 to DELAY - 1) of std_logic;
   type t_addra_pipe is array (0 to DELAY - 1) of std_logic_vector( clogb2(RAM_DEPTH) - 1 downto 0 );
@@ -49,6 +45,11 @@ architecture behavior of tf_pipe_delay is
   signal wea_pipe: t_wea_pipe := (others => '0');
   signal addra_pipe: t_addra_pipe := (others => (others => '0') );
   signal dina_pipe: t_dina_pipe := (others => (others => '0') );
+
+  attribute keep : string;
+  attribute keep of wea_pipe : signal is "true";
+  attribute keep of addra_pipe : signal is "true";
+  attribute keep of dina_pipe : signal is "true";
 begin
 
 wea_out <= wea_pipe(DELAY - 1);

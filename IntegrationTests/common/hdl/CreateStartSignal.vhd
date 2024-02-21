@@ -33,14 +33,14 @@ end CreateStartSignal;
 
 
 architecture behavior of CreateStartSignal is
-  --attribute KEEP_HIERARCHY : string;
-  --attribute KEEP_HIERARCHY of CreateStartSignal: entity is "TRUE";
-  --attribute DONT_TOUCH : string;
-  --attribute DONT_TOUCH of CreateStartSignal : entity is "TRUE";
   type t_DONE_LATCH is array(0 to DELAY-1) of std_logic;
   signal DONE_LATCH : t_DONE_LATCH := (others => '0');
   type t_BX_LATCH is array(0 to DELAY-1) of std_logic_vector(2 downto 0);
   signal BX_LATCH : t_BX_LATCH;
+
+  attribute keep : string;
+  attribute keep of DONE_LATCH : signal is "true";
+  attribute keep of BX_LATCH : signal is "true";
 begin
 
 START <= DONE_LATCH(DELAY-1);
