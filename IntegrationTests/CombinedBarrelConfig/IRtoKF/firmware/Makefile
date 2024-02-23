@@ -8,7 +8,7 @@ all: $(core_file) hdl_add_files xciCreation kfin_adj $(input_file) apollo_input 
 
 $(core_dir):
 	@mkdir cgn mem
-	make -C $(hls_script_path) -j 8 Work
+	make -C $(hls_script_path) -j `nproc` Work
 	ln -s ../../../../../emData/LUTsCMBarrel mem/LUTs
 	ln -s ../../../../../emData/MemPrintsCMBarrel mem/MemPrintsCMBarrel
 	ln -s ../../../../common hdl/common
@@ -21,7 +21,7 @@ kfin_adj:
 	@python3 scripts/kf_link_mod.py
 
 xciCreation: $(core_file)
-	make -f $(core_file) -j 8 all
+	make -f $(core_file) -j `nproc` all
 
 hdl_add_files: $(core_file)
 	cd hdl; ln -s ../../../hdl/*.vhd .
