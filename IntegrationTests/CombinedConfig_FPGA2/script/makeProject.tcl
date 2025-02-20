@@ -151,6 +151,8 @@ add_files -fileset sources_1 [glob common/hdl/*.vhd]
 remove_files -fileset sources_1 [glob common/hdl/latency_monitor.vhd]
 remove_files -fileset sources_1 [glob common/hdl/tf_mem_new.vhd]
 
+# Add post-synthesis script
+add_files -fileset utils_1 [glob common/script/post.tcl]
 
 # Add HDL for TB
 add_files -fileset sim_1 [glob ../tb/tb_tf_top.vhd]
@@ -158,6 +160,7 @@ add_files -fileset sim_1 [glob ../tb/tb_tf_top.vhd]
 # Add constraints (clock etc.)
 add_files -fileset constrs_1 [glob common/hdl/constraints.xdc]
 add_files -fileset constrs_1 [glob floorplan.xdc]
+add_files -fileset constrs_1 [glob soft_floorplan.xdc]
 
 # Set 'sim_1' fileset properties
 set_property file_type {VHDL 2008} [get_files -filter {FILE_TYPE == VHDL}]
@@ -167,6 +170,7 @@ set_property xsim.simulate.runtime -value "0us" -objects  [get_filesets sim_1]
 
 # Set 'synth_1` fileset properties
 set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_context} -objects [get_runs synth_1]
+set_property STEPS.SYNTH_DESIGN.TCL.POST [get_files post.tcl -of [get_fileset utils_1] ] [get_runs synth_1]
 
 update_compile_order -fileset sources_1 
 
