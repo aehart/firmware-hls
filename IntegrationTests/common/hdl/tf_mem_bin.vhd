@@ -220,6 +220,9 @@ signal sa_RAM_data : t_mem_2d_array := read_tf_mem_data_2d(INIT_FILE, INIT_HEX);
 --! Pipeline for return data
 signal sv_RAM_row  : t_data_array := (others => (others =>'0'));
 
+--! Pipeline for read-enable
+signal enb_reg : std_logic_vector(NUM_COPY-1 downto 0);
+
 --! RAM for the number of entries
 signal sa_RAM_numentriesA0 :  t_arr_1d_slv_mem_nent := (others => (others => '0'));
 signal sa_RAM_numentriesA1 :  t_arr_1d_slv_mem_nent := (others => (others => '0'));
@@ -440,11 +443,11 @@ begin
   end if;
 end process;
 
-process(clkb)
+process(clka)
 begin
 
     
-  if rising_edge(clkb) then
+  if rising_edge(clka) then
     --Reading DRAM so should not be on clock edge ?
     if (enb_nent='1') then
       --for i in 0 to NUM_PHI_BINS-1 loop
@@ -476,7 +479,7 @@ begin
   
 end process;
 
-process(clkb)
+process(clka)
 
   variable binmaskvalueA : std_logic_vector(NUM_PHI_BINS - 1 downto 0);
   variable binmaskvalueB : std_logic_vector(NUM_PHI_BINS - 1 downto 0);
@@ -484,7 +487,7 @@ process(clkb)
   
 begin
 
-  if rising_edge(clkb) then
+  if rising_edge(clka) then
     if (enb_binmaskA = '1') then
       binmaskvalueA := binmaskA(to_integer(unsigned(addr_binmaskA))) and validbinmask(to_integer(unsigned(addr_binmaskA)));
       --report "tf_mem_bin binmaskvalueA "&time'image(now)&" "& NAME & " " & to_bstring(binmaskvalueA) & " " & to_bstring(binmaskA(to_integer(unsigned(addr_binmaskA)))) & " " & to_bstring(validbinmask(to_integer(unsigned(addr_binmaskA)))) & " " & to_bstring(validbinmask) & " " & to_bstring(addr_binmaskA)  & " " & to_bstring(addr_binmaskB);  
@@ -501,23 +504,32 @@ begin
   
 end process;
 
+process(clka)
+begin
+  if rising_edge(clka) then
+    enb_reg <= enb;
+  end if;
+end process;
+
 -- The following code generates HIGH_PERFORMANCE (use output register) or LOW_LATENCY (no output register)
 MODE : if (RAM_PERFORMANCE = "LOW_LATENCY") generate -- no_output_register; 1 clock cycle read latency at the cost of a longer clock-to-out timing
-  process(clkb)
+  process(clka)
   begin
     for i in 0 to NUM_COPY-1 loop
       doutb((i+1)*RAM_WIDTH-1 downto i*RAM_WIDTH) <= sv_RAM_row(i);
     end loop;
   end process;
 else generate -- output_register; 2 clock cycle read latency with improve clock-to-out timing
-  process(clkb)
+  process(clka)
   begin
-    if rising_edge(clkb) then
+    if rising_edge(clka) then
       if (rstb='1') then
         doutb <= (others => '0');
-      elsif (regceb='1') then
+      else
         for i in 0 to NUM_COPY-1 loop
-          doutb((i+1)*RAM_WIDTH-1 downto i*RAM_WIDTH) <= sv_RAM_row(i);
+          if (enb_reg(i)='1') then
+            doutb((i+1)*RAM_WIDTH-1 downto i*RAM_WIDTH) <= sv_RAM_row(i);
+          end if;
         end loop;
       end if;
     end if;
