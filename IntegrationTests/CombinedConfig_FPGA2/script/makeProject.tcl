@@ -140,12 +140,12 @@ create_ip -name TrackBuilder_AAAA -module_name TB_AAAA -vendor xilinx.com -libra
 create_ip -name TrackBuilder_BBBB -module_name TB_BBBB -vendor xilinx.com -library hls -version 1.0
 
 # Provide name of top-level HDL (without .vhd extension).
-#set topLevelHDL "SectorProcessor"
-set topLevelHDL "SectorProcessorFull"
+set topLevelHDL "SectorProcessor"
+#set topLevelHDL "SectorProcessorFull"
 
 # Add HDL for algo
 add_files -fileset sources_1 [glob ../hdl/SectorProcessor.vhd]
-add_files -fileset sources_1 [glob ../hdl/SectorProcessorFull.vhd]
+#add_files -fileset sources_1 [glob ../hdl/SectorProcessorFull.vhd]
 add_files -fileset sources_1 [glob ../hdl/memUtil_pkg.vhd]
 add_files -fileset sources_1 [glob common/hdl/*.vhd]
 remove_files -fileset sources_1 [glob common/hdl/latency_monitor.vhd]
