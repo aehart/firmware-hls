@@ -154,12 +154,12 @@ create_ip -name TrackletProcessor_L2D1D  -module_name TP_L2D1D -vendor xilinx.co
 
 
 # Provide name of top-level HDL (without .vhd extension).
-#set topLevelHDL "SectorProcessor"
-set topLevelHDL "SectorProcessorFull"
+set topLevelHDL "SectorProcessor"
+#set topLevelHDL "SectorProcessorFull"
 
 # Add HDL for algo
 add_files -fileset sources_1 [glob ../hdl/SectorProcessor.vhd]
-add_files -fileset sources_1 [glob ../hdl/SectorProcessorFull.vhd]
+#add_files -fileset sources_1 [glob ../hdl/SectorProcessorFull.vhd]
 add_files -fileset sources_1 [glob ../hdl/memUtil_pkg.vhd]
 add_files -fileset sources_1 [glob common/hdl/*.vhd]
 remove_files -fileset sources_1 [glob common/hdl/latency_monitor.vhd]
@@ -177,6 +177,8 @@ set_property file_type {VHDL 2008} [get_files -filter {FILE_TYPE == VHDL}]
 set_property top -value ${topLevelHDL} -objects [get_filesets sim_1]
 set_property top -value "tb_tf_top" -objects [get_filesets sim_1]
 set_property xsim.simulate.runtime -value "0us" -objects  [get_filesets sim_1]
+
+set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_context} -objects [get_runs synth_1]
 
 update_compile_order -fileset sources_1 
 
