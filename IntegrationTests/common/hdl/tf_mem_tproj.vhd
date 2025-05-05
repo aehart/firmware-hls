@@ -102,6 +102,8 @@ end read_tf_mem_tproj_data;
 signal sa_RAM_data : t_arr_1d_slv_mem := read_tf_mem_tproj_data(INIT_FILE, INIT_HEX);         --! RAM data content
 signal sv_RAM_row  : std_logic_vector(RAM_WIDTH-1 downto 0) := (others =>'0');          --! RAM data row
 signal enb_reg : std_logic;                                                             --! Enable register
+signal nent_reg : t_arr_6b(0 to NUM_PAGES*NUM_TPAGES-1) := (others => (others => '0'));
+signal mask_reg : t_arr_4b(0 to NUM_PAGES-1) := (others => (others => '0'));
 
 -- ########################### Attributes ###########################
 attribute ram_style : string;
@@ -125,18 +127,18 @@ begin
   if rising_edge(clka) then -- ######################################### Start counter initially
     --if DEBUG then
     --if (NUM_PAGES = 2) then
-    --  report "tf_mem_tproj "&NAME&" nent(0) nent(1) "&to_bstring(nent_o(0))&" "&to_bstring(nent_o(1));
+    --  report "tf_mem_tproj "&NAME&" nent(0) nent(1) "&to_bstring(nent_reg(0))&" "&to_bstring(nent_reg(1));
     --end if;
     --if (NUM_PAGES = 8 and NUM_TPAGES = 4) then
-    --  report "tf_mem_tproj "&time'image(now)&" "&NAME&" nent_o "
-    --    &to_bstring(nent_o(0))&" "
-    --    &to_bstring(nent_o(1))&" "
-    --    &to_bstring(nent_o(2))&" "
-    --    &to_bstring(nent_o(3))&" "
-    --    &to_bstring(nent_o(4))&" "
-    --    &to_bstring(nent_o(5))&" "
-    --    &to_bstring(nent_o(6))&" "
-    --    &to_bstring(nent_o(7));
+    --  report "tf_mem_tproj "&time'image(now)&" "&NAME&" nent_reg "
+    --    &to_bstring(nent_reg(0))&" "
+    --    &to_bstring(nent_reg(1))&" "
+    --    &to_bstring(nent_reg(2))&" "
+    --    &to_bstring(nent_reg(3))&" "
+    --    &to_bstring(nent_reg(4))&" "
+    --    &to_bstring(nent_reg(5))&" "
+    --    &to_bstring(nent_reg(6))&" "
+    --    &to_bstring(nent_reg(7));
     --end if;
     --end if;
     --end if;
@@ -150,9 +152,9 @@ begin
       else
          slv_page_cnt := (others => '0');
       end if;
-      mask_o(to_integer(unsigned(slv_page_cnt))) <= (others => '0');
-      -- Note that we don't zero the nent_o counters here. When adding entry we
-      -- reset the nent_o counter if the mask is zero
+      mask_reg(to_integer(unsigned(slv_page_cnt))) <= (others => '0');
+      -- Note that we don't zero the nent_reg counters here. When adding entry we
+      -- reset the nent_reg counter if the mask is zero
     end if;
     if (sync_nent='1') and (init='1') then
       --report time'image(now)&" tf_mem_tproj "&NAME&" sync_nent";
@@ -164,21 +166,29 @@ begin
     if (wea='1') then
       tpage := addra(clogb2(NUM_TPAGES)-1 downto 0);
       nentaddress := slv_page_cnt_save&tpage;
-      if (mask_o(to_integer(unsigned(slv_page_cnt_save)))(to_integer(unsigned(tpage)))='1') then
-        address := nentaddress&nent_o(to_integer(unsigned(nentaddress)));
-        if (to_integer(unsigned(nent_o(to_integer(unsigned(nentaddress))))) /= 63) then
-              nent_o(to_integer(unsigned(nentaddress))) <= std_logic_vector(to_unsigned(to_integer(unsigned(nent_o(to_integer(unsigned(nentaddress))))) + 1, nent_o(to_integer(unsigned(nentaddress)))'length)); -- + 1 (slv)
+      if (mask_reg(to_integer(unsigned(slv_page_cnt_save)))(to_integer(unsigned(tpage)))='1') then
+        address := nentaddress&nent_reg(to_integer(unsigned(nentaddress)));
+        if (to_integer(unsigned(nent_reg(to_integer(unsigned(nentaddress))))) /= 63) then
+              nent_reg(to_integer(unsigned(nentaddress))) <= std_logic_vector(to_unsigned(to_integer(unsigned(nent_reg(to_integer(unsigned(nentaddress))))) + 1, nent_reg(to_integer(unsigned(nentaddress)))'length)); -- + 1 (slv)
         end if;
       else
-        address := nentaddress&std_logic_vector(to_unsigned(0, nent_o(to_integer(unsigned(nentaddress)))'length));
-        nent_o(to_integer(unsigned(nentaddress))) <= std_logic_vector(to_unsigned(1, nent_o(to_integer(unsigned(nentaddress)))'length));
+        address := nentaddress&std_logic_vector(to_unsigned(0, nent_reg(to_integer(unsigned(nentaddress)))'length));
+        nent_reg(to_integer(unsigned(nentaddress))) <= std_logic_vector(to_unsigned(1, nent_reg(to_integer(unsigned(nentaddress)))'length));
       end if;
-      --report time'image(now)&" tf_mem_tproj "&NAME&" addra:"&to_bstring(addra)&" tpage:"&to_bstring(tpage)&" writeaddr "&to_bstring(slv_page_cnt_save)&" "&to_bstring(address)&" nentaddress nent:"&to_bstring(nentaddress)&" "&to_bstring(nent_o(to_integer(unsigned(nentaddress))))&" "&to_bstring(dina);
-      if (to_integer(unsigned(nent_o(to_integer(unsigned(nentaddress))))) /= 63) then
+      --report time'image(now)&" tf_mem_tproj "&NAME&" addra:"&to_bstring(addra)&" tpage:"&to_bstring(tpage)&" writeaddr "&to_bstring(slv_page_cnt_save)&" "&to_bstring(address)&" nentaddress nent:"&to_bstring(nentaddress)&" "&to_bstring(nent_reg(to_integer(unsigned(nentaddress))))&" "&to_bstring(dina);
+      if (to_integer(unsigned(nent_reg(to_integer(unsigned(nentaddress))))) /= 63) then
         sa_RAM_data(to_integer(unsigned(address))) <= dina; -- Write data
-        mask_o(to_integer(unsigned(slv_page_cnt_save)))(to_integer(unsigned(tpage))) <= '1';
+        mask_reg(to_integer(unsigned(slv_page_cnt_save)))(to_integer(unsigned(tpage))) <= '1';
       end if;
     end if;
+  end if;
+end process;
+
+process(clkb)
+begin
+  if rising_edge(clkb) then
+    nent_o <= nent_reg;
+    mask_o <= mask_reg;
   end if;
 end process;
 
@@ -188,16 +198,16 @@ begin
     if (enb='1') then
       if DEBUG then
         report "tf_mem_tproj "&time'image(now)&" "&NAME&" readaddr "&to_bstring(addrb) 
-        &" "&to_bstring(sa_RAM_data(to_integer(unsigned(addrb)))) & " mask_o " & to_bstring(mask_o(1)) & " " & to_bstring(mask_o(0))
-        & " nent_o "
-        &to_bstring(nent_o(0))&" "
-        &to_bstring(nent_o(1))&" "
-        &to_bstring(nent_o(2))&" "
-        &to_bstring(nent_o(3))&" "
-        &to_bstring(nent_o(4))&" "
-        &to_bstring(nent_o(5))&" "
-        &to_bstring(nent_o(6))&" "
-        &to_bstring(nent_o(7));
+        &" "&to_bstring(sa_RAM_data(to_integer(unsigned(addrb)))) & " mask_reg " & to_bstring(mask_reg(1)) & " " & to_bstring(mask_reg(0))
+        & " nent_reg "
+        &to_bstring(nent_reg(0))&" "
+        &to_bstring(nent_reg(1))&" "
+        &to_bstring(nent_reg(2))&" "
+        &to_bstring(nent_reg(3))&" "
+        &to_bstring(nent_reg(4))&" "
+        &to_bstring(nent_reg(5))&" "
+        &to_bstring(nent_reg(6))&" "
+        &to_bstring(nent_reg(7));
       end if;
       sv_RAM_row <= sa_RAM_data(to_integer(unsigned(addrb)));
     end if;

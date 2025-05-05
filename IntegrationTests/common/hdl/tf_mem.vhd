@@ -103,6 +103,7 @@ end read_tf_mem_data;
 signal sa_RAM_data : t_arr_1d_slv_mem := read_tf_mem_data(INIT_FILE, INIT_HEX);         --! RAM data content
 signal sv_RAM_row  : t_ram_pipe := (others => (others => '0'));                         --! RAM data row
 signal enb_pipe : t_enb_pipe := (others => '0');                                        --! Enable pipeline
+signal nent_reg : t_arr_7b(0 to NUM_PAGES-1) := (others => (others => '0'));            --! n-entries register
 
 -- ########################### Attributes ###########################
 attribute ram_style : string;
@@ -127,10 +128,10 @@ begin
   if rising_edge(clka) then -- ######################################### Start counter initially
     if DEBUG then
       if (NUM_PAGES = 2) then
-        report "tf_mem "&NAME&" nent(0) nent(1) "&to_bstring(nent_o(0))&" "&to_bstring(nent_o(1));
+        report "tf_mem "&NAME&" nent(0) nent(1) "&to_bstring(nent_reg(0))&" "&to_bstring(nent_reg(1));
       end if;
       if (NUM_PAGES = 8) then
-        report "tf_mem "&NAME&" nent(0)...nent(7) "&to_bstring(nent_o(0))&" "&to_bstring(nent_o(1))&" "&to_bstring(nent_o(2))&" "&to_bstring(nent_o(3))&" "&to_bstring(nent_o(4))&" "&to_bstring(nent_o(5))&" "&to_bstring(nent_o(6))&" "&to_bstring(nent_o(7));
+        report "tf_mem "&NAME&" nent(0)...nent(7) "&to_bstring(nent_reg(0))&" "&to_bstring(nent_reg(1))&" "&to_bstring(nent_reg(2))&" "&to_bstring(nent_reg(3))&" "&to_bstring(nent_reg(4))&" "&to_bstring(nent_reg(5))&" "&to_bstring(nent_reg(6))&" "&to_bstring(nent_reg(7));
       end if;
     end if;
     slv_page_cnt_save := slv_page_cnt;
@@ -149,7 +150,7 @@ begin
          slv_page_cnt := (others => '0');
       end if;
       --report time'image(now)&" tf_mem "&NAME&" will zero nent";
-      nent_o(to_integer(unsigned(slv_page_cnt))) <= (others => '0');
+      nent_reg(to_integer(unsigned(slv_page_cnt))) <= (others => '0');
     end if;
     if (sync_nent='1') and (init='1') then
       --report time'image(now)&" tf_mem "&NAME&" sync_nent";
@@ -161,16 +162,23 @@ begin
       overwrite := addra(0);
       --vi_page_cnt_slv := std_logic_vector(to_unsigned(vi_page_cnt_save,vi_page_cnt_slv'length));
       if (overwrite = '0') then
-        address := slv_page_cnt_save&nent_o(to_integer(unsigned(slv_page_cnt_save)));
+        address := slv_page_cnt_save&nent_reg(to_integer(unsigned(slv_page_cnt_save)));
       else
-        address := slv_page_cnt_save&std_logic_vector(to_unsigned(to_integer(unsigned(nent_o(to_integer(unsigned(slv_page_cnt_save)))))-1,nent_o(to_integer(unsigned(slv_page_cnt_save)))'length));
+        address := slv_page_cnt_save&std_logic_vector(to_unsigned(to_integer(unsigned(nent_reg(to_integer(unsigned(slv_page_cnt_save)))))-1,nent_reg(to_integer(unsigned(slv_page_cnt_save)))'length));
       end if;
       --report "tf_mem "&time'image(now)&" "&NAME&" page writeaddr "&" "&to_bstring(slv_page_cnt_save)&" "&to_bstring(address)&" "&to_bstring(overwrite)&" "&to_bstring(dina)&" addra "&to_bstring(addra);
       sa_RAM_data(to_integer(unsigned(address))) <= dina; -- Write data
       if (overwrite = '0') then
-        nent_o(to_integer(unsigned(slv_page_cnt_save))) <= std_logic_vector(to_unsigned(to_integer(unsigned(nent_o(to_integer(unsigned(slv_page_cnt_save))))) + 1, nent_o(to_integer(unsigned(slv_page_cnt_save)))'length)); -- + 1 (slv)
+        nent_reg(to_integer(unsigned(slv_page_cnt_save))) <= std_logic_vector(to_unsigned(to_integer(unsigned(nent_reg(to_integer(unsigned(slv_page_cnt_save))))) + 1, nent_reg(to_integer(unsigned(slv_page_cnt_save)))'length)); -- + 1 (slv)
       end if;
     end if;
+  end if;
+end process;
+
+process(clkb)
+begin
+  if rising_edge(clkb) then
+    nent_o <= nent_reg;
   end if;
 end process;
 
