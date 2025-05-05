@@ -35,8 +35,10 @@ entity tf_pipeline is
     -- Start/BX signals
     done : in std_logic := '0';
     bx_out : in std_logic_vector(2 downto 0) := (others => '0');
+    bx_out_vld : in std_logic := '0';
     start : out std_logic;
-    bx : out std_logic_vector(2 downto 0)
+    bx : out std_logic_vector(2 downto 0);
+    bx_vld : out std_logic
   );
 end tf_pipeline;
 
@@ -50,12 +52,14 @@ architecture behavior of tf_pipeline is
   type t_dina_pipe is array (0 to DELAY - 1) of std_logic_vector( RAM_WIDTH - 1 downto 0 );
   type t_start_pipe is array(0 to DELAY - 1) of std_logic;
   type t_bx_pipe is array(0 to DELAY - 1) of std_logic_vector(2 downto 0);
+  type t_bx_vld_pipe is array(0 to DELAY - 1) of std_logic;
 
   signal wea_pipe : t_wea_pipe := (others => '0');
   signal addra_pipe : t_addra_pipe := (others => (others => '0') );
   signal dina_pipe : t_dina_pipe := (others => (others => '0') );
   signal start_pipe : t_start_pipe := (others => '0');
   signal bx_pipe : t_bx_pipe := (others => (others => '0') );
+  signal bx_vld_pipe : t_bx_vld_pipe := (others => '0');
 
   attribute shreg_extract : string;
   attribute shreg_extract of wea_pipe : signal is USE_SRL;
@@ -63,6 +67,7 @@ architecture behavior of tf_pipeline is
   attribute shreg_extract of dina_pipe : signal is USE_SRL;
   attribute shreg_extract of start_pipe : signal is USE_SRL;
   attribute shreg_extract of bx_pipe : signal is USE_SRL;
+  attribute shreg_extract of bx_vld_pipe : signal is USE_SRL;
 
 begin
 
@@ -71,6 +76,7 @@ begin
   dina_out <= dina_pipe(DELAY - 1);
   start <= start_pipe(DELAY - 1);
   bx <= bx_pipe(DELAY - 1);
+  bx_vld <= bx_vld_pipe(DELAY - 1);
 
   PIPELINE : process (clk) is
   begin
@@ -83,6 +89,7 @@ begin
         dina_pipe(ii) <= dina_pipe(ii - 1);
         start_pipe(ii) <= start_pipe(ii - 1);
         bx_pipe(ii) <= bx_pipe(ii - 1);
+        bx_vld_pipe(ii) <= bx_vld_pipe(ii - 1);
       end loop;
 
       wea_pipe(0) <= wea;
@@ -92,6 +99,7 @@ begin
         start_pipe(0) <= done;
       end if;
       bx_pipe(0) <= bx_out;
+      bx_vld_pipe(0) <= bx_out_vld;
 
     end if;
 
@@ -129,8 +137,10 @@ entity tf_auto_pipeline is
     -- Start/BX signals
     done : in std_logic := '0';
     bx_out : in std_logic_vector(2 downto 0) := (others => '0');
+    bx_out_vld : in std_logic := '0';
     start : out std_logic;
-    bx : out std_logic_vector(2 downto 0)
+    bx : out std_logic_vector(2 downto 0);
+    bx_vld : out std_logic
   );
 end tf_auto_pipeline;
 
@@ -144,6 +154,7 @@ architecture behavior of tf_auto_pipeline is
   signal dina_reg : std_logic_vector( RAM_WIDTH - 1 downto 0 ) := (others => '0');
   signal start_reg : std_logic := '0';
   signal bx_reg : std_logic_vector(2 downto 0) := (others => '0');
+  signal bx_vld_reg : std_logic := '0';
 
 begin
 
@@ -152,6 +163,7 @@ begin
   dina_out <= dina_reg;
   start <= start_reg;
   bx <= bx_reg;
+  bx_vld <= bx_vld_reg;
 
   AUTO_PIPELINE : process (clk) is
   begin
@@ -165,6 +177,7 @@ begin
         start_reg <= done;
       end if;
       bx_reg <= bx_out;
+      bx_vld_reg <= bx_out_vld;
 
     end if;
 
@@ -206,8 +219,10 @@ entity tf_pipeline_slr_xing is
     -- Start/BX signals
     done : in std_logic := '0';
     bx_out : in std_logic_vector(2 downto 0) := (others => '0');
+    bx_out_vld : in std_logic := '0';
     start : out std_logic;
-    bx : out std_logic_vector(2 downto 0)
+    bx : out std_logic_vector(2 downto 0);
+    bx_vld : out std_logic
   );
 end tf_pipeline_slr_xing;
 
@@ -221,12 +236,14 @@ architecture behavior of tf_pipeline_slr_xing is
   type t_dina_intra is array (0 to NUM_SLR) of std_logic_vector( RAM_WIDTH - 1 downto 0 );
   type t_start_intra is array(0 to NUM_SLR) of std_logic;
   type t_bx_intra is array(0 to NUM_SLR) of std_logic_vector(2 downto 0);
+  type t_bx_vld_intra is array(0 to NUM_SLR) of std_logic;
 
   signal wea_intra : t_wea_intra := (others => '0');
   signal addra_intra : t_addra_intra := (others => (others => '0'));
   signal dina_intra : t_dina_intra := (others => (others => '0'));
   signal start_intra : t_start_intra := (others => '0');
   signal bx_intra : t_bx_intra := (others => (others => '0'));
+  signal bx_vld_intra : t_bx_vld_intra := (others => '0');
 
 begin
 
@@ -235,6 +252,7 @@ begin
   dina_out <= dina_intra(NUM_SLR);
   start <= start_intra(NUM_SLR);
   bx <= bx_intra(NUM_SLR);
+  bx_vld <= bx_vld_intra(NUM_SLR);
 
   PIPELINE_SLR_XING : for ii in 1 to NUM_SLR generate
 
@@ -262,8 +280,10 @@ begin
           clk => clk,
           done => start_intra(ii - 1),
           bx_out => bx_intra(ii - 1),
+          bx_out_vld => bx_vld_intra(ii - 1),
           start => start_intra(ii),
-          bx => bx_intra(ii)
+          bx => bx_intra(ii),
+          bx_vld => bx_vld_intra(ii)
         );
 
     end generate AUTO_PIPELINE_ON;
@@ -300,8 +320,10 @@ begin
               clk => clk,
               done => start_intra(ii - 1),
               bx_out => bx_intra(ii - 1),
+              bx_out_vld => bx_vld_intra(ii - 1),
               start => start_intra(ii),
-              bx => bx_intra(ii)
+              bx => bx_intra(ii),
+              bx_vld => bx_vld_intra(ii)
             );
 
       end generate USE_SRL_ON;
@@ -336,8 +358,10 @@ begin
               clk => clk,
               done => start_intra(ii - 1),
               bx_out => bx_intra(ii - 1),
+              bx_out_vld => bx_vld_intra(ii - 1),
               start => start_intra(ii),
-              bx => bx_intra(ii)
+              bx => bx_intra(ii),
+              bx_vld => bx_vld_intra(ii)
             );
 
       end generate USE_SRL_OFF;
@@ -351,5 +375,6 @@ begin
   dina_intra(0) <= dina;
   start_intra(0) <= done;
   bx_intra(0) <= bx_out;
+  bx_vld_intra(0) <= bx_out_vld;
 
 end behavior;
