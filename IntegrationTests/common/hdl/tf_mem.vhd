@@ -37,7 +37,8 @@ entity tf_mem is
     RAM_PERFORMANCE : string := "HIGH_PERFORMANCE";--! Select "HIGH_PERFORMANCE" (2 clk latency) or "LOW_LATENCY" (1 clk latency)
     NAME            : string := "MEMNAME";          --! Name of mem for printout
     DEBUG           : boolean := false;            --! If true prints debug info
-    MEM_TYPE        : string := "block"            --! specifies RAM type (block/ultra)
+    MEM_TYPE        : string := "block";           --! specifies RAM type (block/ultra)
+    OUT_PIPE_DEPTH  : natural := 1
     );
   port (
     clka      : in  std_logic;                                      --! Write clock
@@ -59,6 +60,8 @@ architecture rtl of tf_mem is
 
 -- ########################### Types ###########################
 type t_arr_1d_slv_mem is array(0 to RAM_DEPTH-1) of std_logic_vector(RAM_WIDTH-1 downto 0); --! 1D array of slv
+type t_ram_pipe is array(0 to OUT_PIPE_DEPTH - 1) of std_logic_vector(RAM_WIDTH-1 downto 0);
+type t_enb_pipe is array(0 to OUT_PIPE_DEPTH - 1) of std_logic;
 
 -- ########################### Function ##########################
 --! @brief TextIO function to read memory data to initialize tf_mem. Needed here because of variable slv width!
@@ -98,8 +101,8 @@ end read_tf_mem_data;
 
 -- ########################### Signals ###########################
 signal sa_RAM_data : t_arr_1d_slv_mem := read_tf_mem_data(INIT_FILE, INIT_HEX);         --! RAM data content
-signal sv_RAM_row  : std_logic_vector(RAM_WIDTH-1 downto 0) := (others =>'0');          --! RAM data row
-signal enb_reg : std_logic;                                                             --! Enable register
+signal sv_RAM_row  : t_ram_pipe := (others => (others => '0'));                         --! RAM data row
+signal enb_pipe : t_enb_pipe := (others => '0');                                        --! Enable pipeline
 
 -- ########################### Attributes ###########################
 attribute ram_style : string;
@@ -178,29 +181,35 @@ begin
       if DEBUG then
         report "tf_mem "&time'image(now)&" "&NAME&" readaddr "&to_bstring(addrb)&" "&to_bstring(sa_RAM_data(to_integer(unsigned(addrb))));
       end if;
-      sv_RAM_row <= sa_RAM_data(to_integer(unsigned(addrb)));
+      sv_RAM_row(0) <= sa_RAM_data(to_integer(unsigned(addrb)));
+      enb_pipe(0) <= enb;
     end if;
   end if;
 end process;
 
-process(clkb)
-begin
-  if rising_edge(clkb) then
-    enb_reg <= enb;
-  end if;
-end process;
+PIPE : if OUT_PIPE_DEPTH > 1 generate
+  process(clkb)
+  begin
+    if rising_edge(clkb) then
+      for ii in 1 to OUT_PIPE_DEPTH - 1 loop
+        enb_pipe(ii) <= enb_pipe(ii - 1);
+        sv_RAM_row(ii) <= sv_RAM_row(ii - 1);
+      end loop;
+    end if;
+  end process;
+end generate PIPE;
 
 -- The following code generates HIGH_PERFORMANCE (use output register) or LOW_LATENCY (no output register)
 MODE : if (RAM_PERFORMANCE = "LOW_LATENCY") generate -- no_output_register; 1 clock cycle read latency at the cost of a longer clock-to-out timing
-  doutb <= sv_RAM_row;
+  doutb <= sv_RAM_row(0);
 else generate -- output_register; 2 clock cycle read latency with improve clock-to-out timing
   process(clkb)
   begin
     if rising_edge(clkb) then
       if (rstb='1') then
         doutb <= (others => '0');
-      elsif (enb_reg='1') then
-        doutb <= sv_RAM_row;
+      elsif (enb_pipe(OUT_PIPE_DEPTH - 1)='1') then
+        doutb <= sv_RAM_row(OUT_PIPE_DEPTH - 1);
       end if;
     end if;
   end process;
