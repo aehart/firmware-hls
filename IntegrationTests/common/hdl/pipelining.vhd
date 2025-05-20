@@ -11,6 +11,7 @@ use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
 --! User packages
 use work.tf_pkg.all;
+use work.memUtil_aux_pkg_f2.all;
 
 entity tf_pipeline is
   generic (
@@ -36,7 +37,13 @@ entity tf_pipeline is
     done : in std_logic := '0';
     bx_out : in std_logic_vector(2 downto 0) := (others => '0');
     start : out std_logic;
-    bx : out std_logic_vector(2 downto 0)
+    bx : out std_logic_vector(2 downto 0);
+
+    -- EMP wrapper interface
+    f2_input_in : in t_f2_in := c_f2_in_init;
+    f2_output_in : in t_f2_out := c_f2_out_init;
+    f2_input_out : out t_f2_in;
+    f2_output_out : out t_f2_out
   );
 end tf_pipeline;
 
@@ -50,12 +57,16 @@ architecture behavior of tf_pipeline is
   type t_dina_pipe is array (0 to DELAY - 1) of std_logic_vector( RAM_WIDTH - 1 downto 0 );
   type t_start_pipe is array(0 to DELAY - 1) of std_logic;
   type t_bx_pipe is array(0 to DELAY - 1) of std_logic_vector(2 downto 0);
+  type t_f2_in_pipe is array(0 to DELAY - 1) of t_f2_in;
+  type t_f2_out_pipe is array(0 to DELAY - 1) of t_f2_out;
 
   signal wea_pipe : t_wea_pipe := (others => '0');
   signal addra_pipe : t_addra_pipe := (others => (others => '0') );
   signal dina_pipe : t_dina_pipe := (others => (others => '0') );
   signal start_pipe : t_start_pipe := (others => '0');
   signal bx_pipe : t_bx_pipe := (others => (others => '0') );
+  signal f2_in_pipe : t_f2_in_pipe := (others => c_f2_in_init);
+  signal f2_out_pipe : t_f2_out_pipe := (others => c_f2_out_init);
 
   attribute shreg_extract : string;
   attribute shreg_extract of wea_pipe : signal is USE_SRL;
@@ -63,6 +74,8 @@ architecture behavior of tf_pipeline is
   attribute shreg_extract of dina_pipe : signal is USE_SRL;
   attribute shreg_extract of start_pipe : signal is USE_SRL;
   attribute shreg_extract of bx_pipe : signal is USE_SRL;
+  attribute shreg_extract of f2_in_pipe : signal is USE_SRL;
+  attribute shreg_extract of f2_out_pipe : signal is USE_SRL;
 
 begin
 
@@ -71,6 +84,8 @@ begin
   dina_out <= dina_pipe(DELAY - 1);
   start <= start_pipe(DELAY - 1);
   bx <= bx_pipe(DELAY - 1);
+  f2_input_out <= f2_in_pipe(DELAY - 1);
+  f2_output_out <= f2_out_pipe(DELAY - 1);
 
   PIPELINE : process (clk) is
   begin
@@ -83,6 +98,8 @@ begin
         dina_pipe(ii) <= dina_pipe(ii - 1);
         start_pipe(ii) <= start_pipe(ii - 1);
         bx_pipe(ii) <= bx_pipe(ii - 1);
+        f2_in_pipe(ii) <= f2_in_pipe(ii - 1);
+        f2_out_pipe(ii) <= f2_out_pipe(ii - 1);
       end loop;
 
       wea_pipe(0) <= wea;
@@ -92,6 +109,8 @@ begin
         start_pipe(0) <= done;
       end if;
       bx_pipe(0) <= bx_out;
+      f2_in_pipe(0) <= f2_input_in;
+      f2_out_pipe(0) <= f2_output_in;
 
     end if;
 
@@ -107,6 +126,7 @@ use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
 --! User packages
 use work.tf_pkg.all;
+use work.memUtil_aux_pkg_f2.all;
 
 entity tf_auto_pipeline is
   generic (
@@ -130,7 +150,13 @@ entity tf_auto_pipeline is
     done : in std_logic := '0';
     bx_out : in std_logic_vector(2 downto 0) := (others => '0');
     start : out std_logic;
-    bx : out std_logic_vector(2 downto 0)
+    bx : out std_logic_vector(2 downto 0);
+
+    -- EMP wrapper interface
+    f2_input_in : in t_f2_in := c_f2_in_init;
+    f2_output_in : in t_f2_out := c_f2_out_init;
+    f2_input_out : out t_f2_in;
+    f2_output_out : out t_f2_out
   );
 end tf_auto_pipeline;
 
@@ -144,6 +170,8 @@ architecture behavior of tf_auto_pipeline is
   signal dina_reg : std_logic_vector( RAM_WIDTH - 1 downto 0 ) := (others => '0');
   signal start_reg : std_logic := '0';
   signal bx_reg : std_logic_vector(2 downto 0) := (others => '0');
+  signal f2_in_reg : t_f2_in := c_f2_in_init;
+  signal f2_out_reg : t_f2_out := c_f2_out_init;
 
 begin
 
@@ -152,6 +180,8 @@ begin
   dina_out <= dina_reg;
   start <= start_reg;
   bx <= bx_reg;
+  f2_input_out <= f2_in_reg;
+  f2_output_out <= f2_out_reg;
 
   AUTO_PIPELINE : process (clk) is
   begin
@@ -165,6 +195,8 @@ begin
         start_reg <= done;
       end if;
       bx_reg <= bx_out;
+      f2_in_reg <= f2_input_in;
+      f2_out_reg <= f2_output_in;
 
     end if;
 
@@ -180,6 +212,7 @@ use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
 --! User packages
 use work.tf_pkg.all;
+use work.memUtil_aux_pkg_f2.all;
 
 entity tf_pipeline_slr_xing is
   generic (
@@ -207,7 +240,13 @@ entity tf_pipeline_slr_xing is
     done : in std_logic := '0';
     bx_out : in std_logic_vector(2 downto 0) := (others => '0');
     start : out std_logic;
-    bx : out std_logic_vector(2 downto 0)
+    bx : out std_logic_vector(2 downto 0);
+
+    -- EMP wrapper interface
+    f2_input_in : in t_f2_in := c_f2_in_init;
+    f2_output_in : in t_f2_out := c_f2_out_init;
+    f2_input_out : out t_f2_in;
+    f2_output_out : out t_f2_out
   );
 end tf_pipeline_slr_xing;
 
@@ -221,12 +260,16 @@ architecture behavior of tf_pipeline_slr_xing is
   type t_dina_intra is array (0 to NUM_SLR) of std_logic_vector( RAM_WIDTH - 1 downto 0 );
   type t_start_intra is array(0 to NUM_SLR) of std_logic;
   type t_bx_intra is array(0 to NUM_SLR) of std_logic_vector(2 downto 0);
+  type t_f2_in_intra is array(0 to NUM_SLR) of t_f2_in;
+  type t_f2_out_intra is array(0 to NUM_SLR) of t_f2_out;
 
   signal wea_intra : t_wea_intra := (others => '0');
   signal addra_intra : t_addra_intra := (others => (others => '0'));
   signal dina_intra : t_dina_intra := (others => (others => '0'));
   signal start_intra : t_start_intra := (others => '0');
   signal bx_intra : t_bx_intra := (others => (others => '0'));
+  signal f2_in_intra : t_f2_in_intra := (others => c_f2_in_init);
+  signal f2_out_intra : t_f2_out_intra := (others => c_f2_out_init);
 
 begin
 
@@ -235,6 +278,8 @@ begin
   dina_out <= dina_intra(NUM_SLR);
   start <= start_intra(NUM_SLR);
   bx <= bx_intra(NUM_SLR);
+  f2_input_out <= f2_in_intra(NUM_SLR);
+  f2_output_out <= f2_out_intra(NUM_SLR);
 
   PIPELINE_SLR_XING : for ii in 1 to NUM_SLR generate
 
@@ -264,6 +309,15 @@ begin
           bx_out => bx_intra(ii - 1),
           start => start_intra(ii),
           bx => bx_intra(ii)
+        );
+
+      AUTO_PIPELINE_EMP_WRAPPER : entity work.tf_auto_pipeline
+        port map (
+          clk => clk,
+          f2_input_in => f2_in_intra(ii - 1),
+          f2_output_in => f2_out_intra(ii - 1),
+          f2_input_out => f2_in_intra(ii),
+          f2_output_out => f2_out_intra(ii)
         );
 
     end generate AUTO_PIPELINE_ON;
@@ -304,6 +358,19 @@ begin
               bx => bx_intra(ii)
             );
 
+          PIPELINE_EMP_WRAPPER : entity work.tf_pipeline
+            generic map (
+              DELAY => DELAY(ii - 1),
+              USE_SRL => "yes"
+            )
+            port map (
+              clk => clk,
+              f2_input_in => f2_in_intra(ii - 1),
+              f2_output_in => f2_out_intra(ii - 1),
+              f2_input_out => f2_in_intra(ii),
+              f2_output_out => f2_out_intra(ii)
+            );
+
       end generate USE_SRL_ON;
 
       USE_SRL_OFF : if not USE_SRL(ii - 1) generate
@@ -340,6 +407,19 @@ begin
               bx => bx_intra(ii)
             );
 
+          PIPELINE_EMP_WRAPPER : entity work.tf_pipeline
+            generic map (
+              DELAY => DELAY(ii - 1),
+              USE_SRL => "no"
+            )
+            port map (
+              clk => clk,
+              f2_input_in => f2_in_intra(ii - 1),
+              f2_output_in => f2_out_intra(ii - 1),
+              f2_input_out => f2_in_intra(ii),
+              f2_output_out => f2_out_intra(ii)
+            );
+
       end generate USE_SRL_OFF;
 
     end generate AUTO_PIPELINE_OFF;
@@ -351,5 +431,7 @@ begin
   dina_intra(0) <= dina;
   start_intra(0) <= done;
   bx_intra(0) <= bx_out;
+  f2_in_intra(0) <= f2_input_in;
+  f2_out_intra(0) <= f2_output_in;
 
 end behavior;
