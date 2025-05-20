@@ -148,6 +148,7 @@ add_files -fileset sources_1 [glob ../hdl/SectorProcessor.vhd]
 #add_files -fileset sources_1 [glob ../hdl/SectorProcessorFull.vhd]
 add_files -fileset sources_1 [glob ../hdl/memUtil_pkg.vhd]
 add_files -fileset sources_1 [glob common/hdl/*.vhd]
+add_files -fileset sources_1 [glob ../../DualFPGA/firmware/hdl/memUtil_*_f2.vhd]
 remove_files -fileset sources_1 [glob common/hdl/latency_monitor.vhd]
 remove_files -fileset sources_1 [glob common/hdl/tf_mem_new.vhd]
 
