@@ -44,8 +44,8 @@ end tf_pipeline;
 
 architecture behavior of tf_pipeline is
 
-  attribute dont_touch : string;
-  attribute dont_touch of behavior : architecture is "yes";
+  attribute keep_hierarchy : string;
+  attribute keep_hierarchy of behavior : architecture is "yes";
 
   type t_wea_pipe is array (0 to DELAY - 1) of std_logic;
   type t_addra_pipe is array (0 to DELAY - 1) of std_logic_vector( clogb2(RAM_DEPTH) - 1 downto 0 );
@@ -146,8 +146,8 @@ end tf_auto_pipeline;
 
 architecture behavior of tf_auto_pipeline is
 
-  attribute dont_touch : string;
-  attribute dont_touch of behavior : architecture is "yes";
+  attribute keep_hierarchy : string;
+  attribute keep_hierarchy of behavior : architecture is "yes";
 
   signal wea_reg : std_logic := '0';
   signal addra_reg : std_logic_vector( clogb2(RAM_DEPTH) - 1 downto 0 ) := (others => '0');
@@ -228,8 +228,8 @@ end tf_pipeline_slr_xing;
 
 architecture behavior of tf_pipeline_slr_xing is
 
-  attribute dont_touch : string;
-  attribute dont_touch of behavior : architecture is "yes";
+  attribute keep_hierarchy : string;
+  attribute keep_hierarchy of behavior : architecture is "yes";
 
   type t_wea_intra is array (0 to NUM_SLR) of std_logic;
   type t_addra_intra is array (0 to NUM_SLR) of std_logic_vector( clogb2(RAM_DEPTH) - 1 downto 0 );
