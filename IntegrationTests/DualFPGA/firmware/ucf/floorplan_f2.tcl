@@ -99,8 +99,7 @@ add_cells_to_pblock [get_pblocks pblock_payload_KF] [get_cells -quiet [list \
 
 #set constraints
 
-set pblock_payload_KFrect [find_rects [get_sites -of [get_clock_regions -f {ROW_INDEX>=8 && ROW_INDEX<=11}] -f "RPM_X >= $lLeftBoundary && RPM_X <= $lRightBoundary"]]
-add_rects_to_pblock_mod $lpblock_payload_KF $pblock_payload_KFrect
+resize_pblock $lpblock_payload_KF -add {SLR2}
 
 #change only payload pblocks to be hard constraints
 set_property IS_SOFT FALSE [get_pblocks pblock_payload_*]
