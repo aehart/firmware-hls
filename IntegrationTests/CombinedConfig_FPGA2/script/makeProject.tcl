@@ -159,8 +159,8 @@ add_files -fileset sim_1 [glob ../tb/tb_tf_top.vhd]
 
 # Add constraints (clock etc.)
 add_files -fileset constrs_1 [glob common/hdl/constraints.xdc]
-add_files -fileset constrs_1 [glob floorplan.xdc]
-add_files -fileset constrs_1 [glob soft_floorplan.xdc]
+add_files -fileset constrs_1 [glob floorplan_ooc.xdc]
+add_files -fileset constrs_1 [glob soft_floorplan_ooc.xdc]
 
 # Set 'sim_1' fileset properties
 set_property file_type {VHDL 2008} [get_files -filter {FILE_TYPE == VHDL}]
