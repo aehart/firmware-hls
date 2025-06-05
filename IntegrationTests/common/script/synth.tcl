@@ -18,9 +18,6 @@ reset_run synth_1
 #set_property STEPS.SYNTH_DESIGN.ARGS.NO_LC false [get_runs synth_1]
 #set_property STEPS.SYNTH_DESIGN.ARGS.SHREG_MIN_SIZE 3 [get_runs synth_1]
 
-# Needed if design doesn't connect to I/O pins of FPGA.
-set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_context} -objects [get_runs synth_1]
-
 # Synthesis
 update_compile_order -fileset sources_1
 set ncpus [exec nproc]
