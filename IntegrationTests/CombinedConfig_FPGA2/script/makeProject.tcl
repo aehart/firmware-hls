@@ -170,6 +170,7 @@ set_property xsim.simulate.runtime -value "0us" -objects  [get_filesets sim_1]
 
 # Set 'synth_1` fileset properties
 set_property STEPS.SYNTH_DESIGN.TCL.POST [get_files post.tcl -of [get_fileset utils_1] ] [get_runs synth_1]
+set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_context} -objects [get_runs synth_1]
 
 update_compile_order -fileset sources_1 
 
