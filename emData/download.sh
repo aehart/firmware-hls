@@ -320,3 +320,8 @@ done # loop over module_type
 
 # Wait for all background processes to finish.
 wait
+
+# Temporarily restore the following files, until project_generation_scripts is
+# updated to generate them
+git restore ../IntegrationTests/CombinedConfig_FPGA1/hdl/SectorProcessor.vhd
+git restore ../IntegrationTests/CombinedConfig_FPGA1/tb/tb_tf_top.vhd
